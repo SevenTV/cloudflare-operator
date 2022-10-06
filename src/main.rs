@@ -2,13 +2,17 @@ use std::process::exit;
 
 use log::{debug, error};
 
+mod api;
 mod config;
 mod context;
+mod errors;
+mod types;
 mod utils;
 
 use utils::logger;
 
-fn main() {
+#[tokio::main]
+async fn main() {
     let logger = logger::init();
     let mut config = config::args::parse();
 
@@ -36,5 +40,13 @@ fn main() {
         logger.set_level(log::LevelFilter::Info);
     }
 
-    let _context = context::Context { config };
+    let context = context::Context { config };
+
+    let result = context.run().await;
+    if let Err(err) = result {
+        error!("{:?}", err);
+        exit(1);
+    }
+
+    exit(0);
 }

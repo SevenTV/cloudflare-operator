@@ -1,3 +1,6 @@
+run:
+	bash -c "./build_run.sh"
+
 build:
 	cargo build --release
 
