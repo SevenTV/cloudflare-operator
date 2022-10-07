@@ -1,3 +1,4 @@
+use log::info;
 use serde::{Deserialize, Serialize};
 use anyhow::Result;
 
@@ -76,8 +77,13 @@ pub async fn run(_ctx: &Context) -> Result<()> {
             .unwrap()
     });
 
-    println!("{:?}", resp.await?);
-    println!("{:?}", resp2.await?);
-    println!("{:?}", resp3.await?);
+    info!("Waiting on responses");
+
+    let (resp, resp2, resp3) = tokio::join!(resp, resp2, resp3);
+
+    info!("resp1: {:?}", resp);
+    info!("resp2: {:?}", resp2);
+    info!("resp3: {:?}", resp3);
+
     Ok(())
 }
