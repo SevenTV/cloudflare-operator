@@ -5,5 +5,3 @@ endpoint!(P Vec8Endpoint, Vec<u8>, { [ resp, self ]
         hyper::body::to_bytes(resp.into_body()).await?.to_vec()
     )
 });
-
-pub use internal::Vec8Endpoint;

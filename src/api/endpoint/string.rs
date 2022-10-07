@@ -6,5 +6,3 @@ endpoint!(P StringEndpoint, String, { [ resp, self ]
             .to_string(),
     )
 });
-
-pub use internal::StringEndpoint;

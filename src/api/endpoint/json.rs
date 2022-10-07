@@ -11,5 +11,3 @@ endpoint!(T JsonEndpoint, ResultJson, { [ resp, self ]
         &hyper::body::to_bytes(resp.into_body()).await?.to_vec(),
     )?)
 });
-
-pub use internal::JsonEndpoint;

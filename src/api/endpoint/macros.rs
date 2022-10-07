@@ -93,6 +93,8 @@ macro_rules! endpoint {
                 }
             }
         }
+
+        pub use $namespace::$name;
     };
     (T $namespace:ident, $name:ident, $result:ident, { [$resp:ident, $self:ident] $($body:tt)* }) => {
         mod $namespace {
@@ -138,6 +140,8 @@ macro_rules! endpoint {
                 }
             }
         }
+        
+        pub use $namespace::$name;
     };
 }
 
