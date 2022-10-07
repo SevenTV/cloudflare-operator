@@ -1,11 +1,24 @@
+use crate::{types::Result, utils::macros::trait_alias};
 use std::fmt::Debug;
 
-#[derive(Default, Debug)]
-pub struct RawBody {
-    pub body: Vec<u8>,
+pub trait RequestBody: Send + Sync + Debug {
+    fn to_vec(&self) -> Result<Vec<u8>> {
+        Ok(Vec::new())
+    }
 }
 
-#[derive(Default, Debug)]
-pub struct StringBody {
-    pub body: String,
+impl RequestBody for () {}
+
+impl RequestBody for Vec<u8> {
+    fn to_vec(&self) -> Result<Vec<u8>> {
+        Ok(self.to_owned())
+    }
 }
+
+impl RequestBody for String {
+    fn to_vec(&self) -> Result<Vec<u8>> {
+        Ok(self.as_bytes().to_vec())
+    }
+}
+
+trait_alias!(pub ResultBase = Debug + Default);

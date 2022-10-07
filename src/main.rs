@@ -2,12 +2,14 @@ use std::process::exit;
 
 use log::{debug, error};
 
+#[macro_use]
+mod utils;
+
 mod api;
 mod config;
 mod context;
 mod errors;
 mod types;
-mod utils;
 
 use utils::logger;
 

@@ -6,7 +6,7 @@ use serde::Serialize;
 
 use crate::types::Result;
 
-use self::endpoint::Endpoint;
+use self::{endpoint::Endpoint, types::RequestBody};
 
 pub mod endpoint;
 pub mod types;
@@ -15,14 +15,14 @@ pub mod types;
 pub trait ApiClient: Send + Sync {
     async fn request<ResultType, QueryType, BodyType>(
         &self,
-        endpoint: &(dyn Endpoint<ResultType, QueryType, BodyType>),
+        endpoint: Box<dyn Endpoint<ResultType, QueryType, BodyType>>,
     ) -> Result<ResultType>
     where
         ResultType: Debug + Default,
         QueryType: Serialize,
-        BodyType: Serialize,
+        BodyType: RequestBody,
     {
-        let mut builder = Request::builder().method(endpoint.method());
+        let mut builder = Request::builder().method(endpoint._method());
 
         if let Some(headers) = self.headers() {
             for (key, value) in headers {
@@ -30,25 +30,25 @@ pub trait ApiClient: Send + Sync {
             }
         }
 
-        if let Some(headers) = endpoint.headers() {
+        if let Some(headers) = endpoint._headers() {
             for (key, value) in headers {
                 builder = builder.header(key, value);
             }
         }
 
-        if let Some(query) = endpoint.query() {
+        if let Some(query) = endpoint._query() {
             builder = builder.uri(format!(
                 "{}{}?{}",
                 self.base_url(),
-                endpoint.path(),
+                endpoint._path(),
                 serde_qs::to_string(&query)?
             ));
         } else {
-            builder = builder.uri(format!("{}{}", self.base_url(), endpoint.path()));
+            builder = builder.uri(format!("{}{}", self.base_url(), endpoint._path()));
         }
 
-        let req = builder.body(match endpoint.body() {
-            Some(body) => Body::from(serde_json::to_vec(&body)?),
+        let req = builder.body(match endpoint._body() {
+            Some(body) => Body::from(body.to_vec()?),
             None => Body::empty(),
         })?;
 
@@ -61,7 +61,7 @@ pub trait ApiClient: Send + Sync {
 
         let client: Client<_, Body> = Client::builder().build(https);
 
-        Ok(endpoint.result(client.request(req).await?).await?)
+        Ok(endpoint._result(client.request(req).await?).await?)
     }
 
     fn base_url(&self) -> String {
