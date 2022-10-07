@@ -1,4 +1,4 @@
-use crate::types::Result;
+use anyhow::Result;
 use async_trait::async_trait;
 use hyper::{Body, Client, Request};
 

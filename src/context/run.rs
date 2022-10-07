@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use anyhow::Result;
 
 use crate::{
     api::{
@@ -6,7 +7,6 @@ use crate::{
         types::QueryParamsSerialize,
         ApiClient,
     },
-    types::Result,
 };
 
 use super::Context;

@@ -1,6 +1,6 @@
+use anyhow::Result;
 use serde::Serialize;
-
-use crate::{types::Result, utils::macros::trait_alias};
+use crate::utils::macros::trait_alias;
 use std::fmt::Debug;
 
 pub trait RequestBody: Send + Sync + Debug {

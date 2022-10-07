@@ -59,8 +59,8 @@ macro_rules! endpoint {
                     endpoint::Endpoint,
                     types::{QueryParams, RequestBody},
                 },
-                types::Result,
             };
+            use anyhow::Result;
             use async_trait::async_trait;
             use hyper::{Body, Response, Method};
             use $crate::api::endpoint::macros::endpoint_common;
@@ -103,8 +103,8 @@ macro_rules! endpoint {
                     endpoint::Endpoint,
                     types::{QueryParams, RequestBody},
                 },
-                types::Result,
             };
+            use anyhow::Result;
             use async_trait::async_trait;
             use hyper::{Body, Response, Method};
             use $crate::api::endpoint::macros::endpoint_common;

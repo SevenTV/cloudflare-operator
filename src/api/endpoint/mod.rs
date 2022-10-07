@@ -1,7 +1,7 @@
 use async_trait::async_trait;
 use hyper::{Body, Method, Response};
 
-use crate::types::Result;
+use anyhow::Result;
 
 use super::types::{QueryParams, RequestBody, ResultBase};
 

@@ -1,5 +1,5 @@
 use crate::config::Config;
-use crate::types::Result;
+use anyhow::Result;
 
 mod run;
 
