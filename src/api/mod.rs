@@ -1,12 +1,11 @@
-use std::fmt::Debug;
-
+use crate::types::Result;
 use async_trait::async_trait;
 use hyper::{Body, Client, Request};
-use serde::Serialize;
 
-use crate::types::Result;
-
-use self::{endpoint::Endpoint, types::RequestBody};
+use self::{
+    endpoint::Endpoint,
+    types::{QueryParams, RequestBody, ResultBase},
+};
 
 pub mod endpoint;
 pub mod types;
@@ -18,8 +17,8 @@ pub trait ApiClient: Send + Sync {
         endpoint: Box<dyn Endpoint<ResultType, QueryType, BodyType>>,
     ) -> Result<ResultType>
     where
-        ResultType: Debug + Default,
-        QueryType: Serialize,
+        ResultType: ResultBase,
+        QueryType: QueryParams,
         BodyType: RequestBody,
     {
         let mut builder = Request::builder().method(endpoint._method());
@@ -41,7 +40,7 @@ pub trait ApiClient: Send + Sync {
                 "{}{}?{}",
                 self.base_url(),
                 endpoint._path(),
-                serde_qs::to_string(&query)?
+                query.to_string()?
             ));
         } else {
             builder = builder.uri(format!("{}{}", self.base_url(), endpoint._path()));

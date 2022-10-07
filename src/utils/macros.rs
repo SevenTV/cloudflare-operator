@@ -11,4 +11,4 @@ macro_rules! trait_alias {
     };
 }
 
-pub(crate) use {trait_alias, items};
+pub(crate) use {items, trait_alias};

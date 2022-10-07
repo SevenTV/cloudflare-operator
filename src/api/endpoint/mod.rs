@@ -1,10 +1,9 @@
 use async_trait::async_trait;
 use hyper::{Body, Method, Response};
-use serde::Serialize;
 
 use crate::types::Result;
 
-use super::types::{RequestBody, ResultBase};
+use super::types::{QueryParams, RequestBody, ResultBase};
 
 mod macros;
 
@@ -20,7 +19,7 @@ pub use vec_8::*;
 pub trait Endpoint<ResultType = (), QueryType = (), BodyType = ()>: Sync + Send
 where
     ResultType: ResultBase,
-    QueryType: Serialize,
+    QueryType: QueryParams,
     BodyType: RequestBody,
 {
     fn _method(&self) -> Method {

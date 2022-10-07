@@ -1,3 +1,5 @@
+use serde::Serialize;
+
 use crate::{types::Result, utils::macros::trait_alias};
 use std::fmt::Debug;
 
@@ -21,4 +23,35 @@ impl RequestBody for String {
     }
 }
 
-trait_alias!(pub ResultBase = Debug + Default);
+pub trait QueryParams: Send + Sync + Debug {
+    fn to_string(&self) -> Result<String> {
+        Ok(String::new())
+    }
+}
+
+impl QueryParams for () {}
+
+impl QueryParams for String {
+    fn to_string(&self) -> Result<String> {
+        Ok(self.to_owned())
+    }
+}
+
+impl QueryParams for Vec<(String, String)> {
+    fn to_string(&self) -> Result<String> {
+        Ok(self
+            .iter()
+            .map(|(k, v)| format!("{}={}", k, v))
+            .collect::<Vec<String>>()
+            .join("&"))
+    }
+}
+
+trait_alias!(pub ResultBase = Debug + Default + Sync + Send);
+pub trait QueryParamsSerialize: Serialize + ResultBase {}
+
+impl<T: QueryParamsSerialize> QueryParams for T {
+    fn to_string(&self) -> Result<String> {
+        Ok(serde_qs::to_string(self)?)
+    }
+}
