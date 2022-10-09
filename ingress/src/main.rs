@@ -9,13 +9,15 @@ use log::{error, info};
 
 #[tokio::main]
 async fn main() {
+    console_subscriber::init();
+
     let config = setup::setup();
 
     info!("Starting cloudflared-ingress");
 
     let result = app::start(config).await;
     if let Err(err) = result {
-        error!("Failed to start: {:#}", err);
+        error!("{:#}", err);
         exit(1);
     }
 

@@ -19,6 +19,9 @@ pub struct Config {
     // Debug mode
     debug: Option<bool>,
 
+    // Graceful shutdown timeout
+    shutdown_timeout: Option<u64>,
+
     // Config file path
     config_file: Option<String>,
 }
@@ -65,11 +68,16 @@ impl Config {
         self.debug.unwrap_or(false)
     }
 
+    pub fn get_shutdown_timeout(&self) -> Option<u64> {
+        self.shutdown_timeout.clone()
+    }
+
     pub fn merge(&self, other: &mut Config) {
         *other = Config {
             cloudflare: other.cloudflare.merge(&self.cloudflare),
             kubernetes: other.kubernetes.merge(&self.kubernetes),
             debug: other.debug.or(self.debug),
+            shutdown_timeout: other.shutdown_timeout.or(self.shutdown_timeout),
             config_file: other
                 .config_file
                 .clone()

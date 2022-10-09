@@ -74,10 +74,16 @@ pub fn parse() -> Config {
                 .long("config")
                 .help("Config file path"),
         )
+        .arg(
+            Arg::new("shutdown_timeout")
+                .long("shutdown-timeout")
+                .help("Graceful shutdown timeout"),
+        )
         .get_matches();
 
     return Config {
         debug: bool_optional!(matches.get_one::<bool>("debug").unwrap().to_owned()),
+        shutdown_timeout: matches.get_one::<u64>("shutdown_timeout").cloned(),
         kubernetes: ConfigKubernetes {
             kubeconfig: matches.get_one::<String>("kubernetes.kubeconfig").cloned(),
             namespace: matches.get_one::<String>("kubernetes.namespace").cloned(),

@@ -13,7 +13,7 @@ pub fn generated_mod(input: TokenStream) -> TokenStream {
     // get out dir
     let out_dir = std::env::var("OUT_DIR").unwrap();
 
-    let path = format!("#[path = \"{}/{}\"]", out_dir, file);
+    let path = format!("#[allow(dead_code)]\n#[path = \"{}/{}\"]", out_dir, file);
 
     let q = format!("{}\n{} mod {};", path, vis, name);
 

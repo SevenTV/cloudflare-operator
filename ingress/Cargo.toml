@@ -8,7 +8,7 @@ edition = "2021"
 [dependencies]
 utils = { path = "../utils" }
 framework = { path = "../framework" }
-tokio = { version = "1.21.2", features = ["full"] }
+tokio = { version = "1.21.2", features = ["full", "tracing"] }
 log = "0.4.17"
 anyhow = "1.0.65"
 cloudflare = "0.9.1"
@@ -17,3 +17,4 @@ serde = { version = "1.0.145", features = ["derive"] }
 serde-env = "0.1.0"
 clap = "4.0.10"
 uuid = { version = "1.2.0", features = ["v4"] }
+console-subscriber = "0.1.8"
