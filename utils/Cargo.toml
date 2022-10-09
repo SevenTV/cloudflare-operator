@@ -1,0 +1,13 @@
+[package]
+name = "utils"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+anyhow = "1.0.65"
+log = "0.4.17"
+log4rs = "1.1.1"
+tokio = { version = "1.21.2", features = ["full"] }
+trust-dns-resolver = "0.22.0"

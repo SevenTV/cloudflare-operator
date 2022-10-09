@@ -1,12 +1,48 @@
 # todo
 
-- [ ] implement cloudflare API
+## We need to
 
-- [ ] implmenet cloudflared tunnels
+- fetch k8s ingress resources.
+- secure a resource lease to ensure we are the only controller managing it.
+- create a cloudflared tunnel to proxy the ingress resources.
+        - this will require us to implement cloudflared tunnels in rust.
+        - we will need to implement a cloudflared tunnel client.
+        - we will have to use quic and or http2 to proxy the ingress resources.
+- update the ingress resource with the cloudflared tunnel URL.
+- watch for changes to the ingress resource and update the proxy rules.
+- watch for changes to the endpointslices and update the proxy rules, removing or adding ip targets as needed.
+- watch for changes to secrets and update the proxy rules with new credentials if TLS is enabled.
 
-- [ ] use k8s api
+## Features
 
-- [ ] pog?
+- upsteam tls
+- upstream http2
+- upstream websocket
+- upstream grpc
+- upstream eventstream
+- upstream keepalive
+- healthchecks are implemented by the pod liveness/readiness probe
+- ingress class
+- ingress without class
+- ingress with multiple hosts
+- ingress with multiple paths
+- default ingress backend
+- ingress with multiple backends
+
+## Things we will not support
+
+- edge tls certificates (we cannot support this because this is managed by cloudflare)
+
+## Optionals
+
+- CRDs for ingress resources, since these are very complex and its not apart of the k8s spec and annotations are a mess.
+- CRDs for cloudflared tunnels, so we can manage them outside of the ingress resource.
+        (We would likely have to make a separate controller for this, a controller to manage this controller)
+- manage cloudflare DNS records for the ingress resources.
+- manage cloudflare firewall rules for the ingress resources.            (maybe?)
+- manage cloudflare load balancer pools for the ingress resources.       (maybe?)
+- manage cloudflare load balancer monitors for the ingress resources.    (maybe?)
+- manage cloudflare load balancer pools for the ingress resources.       (maybe?)
 
 ## useful links
 
