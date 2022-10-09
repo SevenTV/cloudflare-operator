@@ -17,7 +17,7 @@ impl EdgeRegionLocation {
     }
 }
 
-pub async fn resolve_edge_addr(location: &EdgeRegionLocation) -> Result<Vec<EdgeRegion>> {
+pub(super) async fn resolve_edge_addr(location: &EdgeRegionLocation) -> Result<Vec<EdgeRegion>> {
     let cloudflare_resolver =
         TokioAsyncResolver::tokio(ResolverConfig::cloudflare(), Default::default())
             .context("failed to create cloudflare_resolver")?;

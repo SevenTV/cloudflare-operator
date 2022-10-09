@@ -1,7 +1,7 @@
 @0xdb8274f9144abc7e;
 
 using Rust = import "rust.capnp";
-$Rust.parentModule("rpc::tunnelrpc");
+$Rust.parentModule("cloudflare::rpc");
 
 struct Authentication {
     key @0 :Text;

@@ -3,7 +3,7 @@ use capnp_rpc::{Connection, VatNetwork};
 use futures::{AsyncRead, FutureExt};
 use log::debug;
 
-struct LoggedVatNetwork<T>
+pub(super) struct LoggedVatNetwork<T>
 where
     T: AsyncRead + 'static + Unpin,
 {
@@ -14,11 +14,11 @@ impl<T> LoggedVatNetwork<T>
 where
     T: AsyncRead + Unpin,
 {
-    fn new(network: Box<dyn VatNetwork<T>>) -> Self {
+    pub fn new(network: Box<dyn VatNetwork<T>>) -> Self {
         Self { network }
     }
 
-    fn boxed(self) -> Box<dyn VatNetwork<T>> {
+    pub fn boxed(self) -> Box<dyn VatNetwork<T>> {
         Box::new(self)
     }
 }

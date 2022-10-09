@@ -9,17 +9,17 @@ pub struct Tunnel {
     #[serde(default)]
     pub account_tag: String,
     #[serde(default)]
-    pub created_at: DateTime<Utc>, // TODO: DateTime
+    pub created_at: DateTime<Utc>,
     #[serde(default)]
-    pub deleted_at: Option<DateTime<Utc>>, // TODO: DateTime
+    pub deleted_at: Option<DateTime<Utc>>,
     #[serde(default)]
     pub name: String,
     #[serde(default)]
     pub connections: Vec<TunnelConn>,
     #[serde(default)]
-    pub conns_active_at: Option<DateTime<Utc>>, // TODO: DateTime
+    pub conns_active_at: Option<DateTime<Utc>>,
     #[serde(default)]
-    pub conns_inactive_at: Option<DateTime<Utc>>, // TODO: DateTime
+    pub conns_inactive_at: Option<DateTime<Utc>>,
     #[serde(default)]
     pub tun_type: String,
     #[serde(default)]

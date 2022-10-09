@@ -1,15 +1,34 @@
-use std::collections::HashMap;
+use std::net::IpAddr;
 
-use anyhow::Result;
 use bitflags::bitflags;
 
-mod dns;
+#[derive(Debug, Clone)]
+pub(super) struct EdgeRegion {
+    pub addrs: Vec<IpAddr>,
+    pub hostname: String,
+    pub port: u16,
+}
+pub enum EdgeRegionLocation {
+    AUTO,
+    US,
+}
 
-pub mod supervisor;
-pub mod types;
+pub(super) struct ClientInfo {
+    pub client_id: uuid::Uuid, // this is required for capnp
+    pub features: TunnelFeatures,
+    pub version: String,
+    pub arch: String,
+}
+
+#[derive(Debug, PartialEq, Eq, Hash)]
+pub(super) enum Protocol {
+    NONE,
+    QUIC,
+    HTTP2,
+}
 
 bitflags! {
-    pub struct TunnelFeatures: u32 {
+    pub(super) struct TunnelFeatures: u32 {
         const SERIALIZED_HEADERS = 1 << 0;
         const QUICK_RECONNECT = 1 << 1;
         const ALLOW_REMOTE_CONFIG = 1 << 2;
@@ -21,7 +40,7 @@ bitflags! {
 }
 
 impl TunnelFeatures {
-    pub fn to_vec(&self) -> Vec<String> {
+    pub(super) fn to_vec(&self) -> Vec<String> {
         let mut features = Vec::new();
 
         if self.contains(Self::SERIALIZED_HEADERS) {
@@ -48,27 +67,13 @@ impl TunnelFeatures {
     }
 }
 
-pub struct ClientInfo {
-    pub client_id: uuid::Uuid, // this is required for capnp
-    pub features: TunnelFeatures,
-    pub version: String,
-    pub arch: String,
-}
-
-#[derive(Debug, PartialEq, Eq, Hash)]
-pub enum Protocol {
-    NONE,
-    QUIC,
-    HTTP2,
-}
-
-pub struct TLSSettings {
+pub(super) struct TLSSettings {
     pub server_name: String,
     pub next_protos: Vec<String>,
 }
 
 impl Protocol {
-    pub fn fallback(&self) -> Self {
+    pub(super) fn fallback(&self) -> Self {
         match self {
             Protocol::QUIC => Protocol::HTTP2,
             Protocol::HTTP2 => Protocol::NONE,
@@ -76,7 +81,7 @@ impl Protocol {
         }
     }
 
-    pub fn tls_settings(&self) -> TLSSettings {
+    pub(super) fn tls_settings(&self) -> TLSSettings {
         match self {
             Protocol::QUIC => TLSSettings {
                 server_name: "quic.cftunnel.com".to_string(),

@@ -3,8 +3,11 @@ use std::{collections::HashMap, io::BufReader};
 use anyhow::{anyhow, Result};
 use rustls::Certificate;
 
-use crate::rpc::cloudflare::Protocol;
+use super::types::{Protocol, TLSSettings};
 
+// TODO: we should likely get these from the cloudflare api
+// however in the go implementation they are hardcoded
+// so we will do the same until they update their implementation
 const CLOUDFLARE_CERTS: &str = "
 Issuer: C=US, ST=California, L=San Francisco, O=CloudFlare, Inc., OU=CloudFlare Origin SSL ECC Certificate Authority
 -----BEGIN CERTIFICATE-----
@@ -86,12 +89,12 @@ fVQ6VpyjEXdiIXWUq/o=
 -----END CERTIFICATE-----";
 
 #[derive(Clone)]
-pub struct RootCert {
+pub(super) struct RootCert {
     pub config: rustls::ClientConfig,
     pub server_name: String,
 }
 
-pub async fn create_tunnel_tls_config(server_name: String) -> Result<RootCert> {
+pub(super) async fn create_tunnel_tls_config(settings: TLSSettings) -> Result<RootCert> {
     let config = rustls::ClientConfig::builder().with_safe_defaults();
 
     let mut roots = rustls::RootCertStore::empty();
@@ -103,11 +106,15 @@ pub async fn create_tunnel_tls_config(server_name: String) -> Result<RootCert> {
         roots.add(cert).unwrap();
     });
 
-    let config = config.with_root_certificates(roots).with_no_client_auth();
+    let mut config = config.with_root_certificates(roots).with_no_client_auth();
+
+    for proto in settings.next_protos {
+        config.alpn_protocols.push(proto.into_bytes());
+    }
 
     Ok(RootCert {
         config: config,
-        server_name: server_name,
+        server_name: settings.server_name,
     })
 }
 
@@ -120,16 +127,16 @@ fn create_cloudflare_cert_blocks() -> Result<Vec<Certificate>> {
     }
 }
 
-pub async fn get_proto_edge_tls_map() -> Result<HashMap<Protocol, RootCert>> {
+pub(super) async fn get_proto_edge_tls_map() -> Result<HashMap<Protocol, RootCert>> {
     let mut map = HashMap::new();
 
     map.insert(
         Protocol::QUIC,
-        create_tunnel_tls_config(Protocol::QUIC.tls_settings().server_name).await?,
+        create_tunnel_tls_config(Protocol::QUIC.tls_settings()).await?,
     );
     map.insert(
         Protocol::HTTP2,
-        create_tunnel_tls_config(Protocol::HTTP2.tls_settings().server_name).await?,
+        create_tunnel_tls_config(Protocol::HTTP2.tls_settings()).await?,
     );
 
     Ok(map)
