@@ -1,4 +1,4 @@
-use std::{future::Future, time::Duration};
+use std::time::Duration;
 
 use crate::config;
 use anyhow::{anyhow, Context, Result};
@@ -13,8 +13,6 @@ pub async fn start(cfg: config::Config) -> Result<()> {
 
     let main = tokio::spawn(async move {
         supervisor.start(context.clone()).await.unwrap();
-        time::sleep(Duration::from_secs(10)).await;
-        drop(context);
     });
 
     select! {

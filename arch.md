@@ -10,9 +10,9 @@
 
 - We are only interested in supporting tunnels because that is the only feature we need.
 
-### Check if post-quantum? (not sure what this is, only support QUIC it seems)
+### Check if post-quantum
 
-- Not sure what this is will have to do some more research if this is something I need to support.
+- post-quantum is a cryptograpic sharing method which aims to be secure vs quantum computers
 
 ### DNS lookup to get protocol percentage
 
@@ -41,7 +41,7 @@
             "serialized_headers": "I am not sure what this does however we have been using it",
             "support_datagram_v2": "I am also not sure what this is either but we have been using it",
             "quick_reconnects": "again not sure what this does, not enabled by default",
-            "postquantum": "is related to the 2nd step not sure what it is, not enabled by default enabled"
+            "postquantum": "cryptographic security vs quantum computers, not enabled by default enabled"
         }
     ```
 

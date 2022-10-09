@@ -94,7 +94,7 @@ macro_rules! handle_cloudflare_response {
             ));
         }
 
-        return Ok(data.result.unwrap());
+        return Ok(data.result.unwrap_or(Default::default()));
     };
 }
 
