@@ -286,23 +286,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "controller"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "clap",
- "cloudflare",
- "framework",
- "log",
- "serde",
- "serde-env",
- "serde_yaml 0.9.13",
- "tokio",
- "utils",
- "uuid 1.2.0",
-]
-
-[[package]]
 name = "core-foundation"
 version = "0.9.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -763,6 +746,23 @@ checksum = "10a35a97730320ffe8e2d410b5d3b69279b98d2c14bdb8b70ea89ecf7888d41e"
 dependencies = [
  "autocfg",
  "hashbrown",
+]
+
+[[package]]
+name = "ingress"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "clap",
+ "cloudflare",
+ "framework",
+ "log",
+ "serde",
+ "serde-env",
+ "serde_yaml 0.9.13",
+ "tokio",
+ "utils",
+ "uuid 1.2.0",
 ]
 
 [[package]]

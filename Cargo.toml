@@ -1,7 +1,7 @@
 [workspace]
 
 members = [
-    "controller",
+    "ingress",
     "framework",
     "utils",
     "procmacros",
