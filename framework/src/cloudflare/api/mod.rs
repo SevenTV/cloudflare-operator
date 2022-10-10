@@ -47,8 +47,8 @@ impl Client {
 
         let mut request = self.add_auth(self.client.request(method.clone(), url));
 
-        if body.is_some() {
-            request = request.json(body.unwrap());
+        if let Some(body) = body {
+            request = request.json(body);
         }
 
         let response = request

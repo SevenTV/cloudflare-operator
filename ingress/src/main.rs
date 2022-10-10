@@ -11,13 +11,19 @@ use log::{error, info};
 async fn main() {
     console_subscriber::init();
 
-    let config = setup::setup();
+    let config = match setup::setup() {
+        Ok(config) => config,
+        Err(err) => {
+            error!("failed to setup: {:#}", err);
+            exit(1);
+        }
+    };
 
     info!("Starting cloudflared-ingress");
 
     let result = app::start(config).await;
     if let Err(err) = result {
-        error!("{:#}", err);
+        error!("app failed with: {:#}", err);
         exit(1);
     }
 

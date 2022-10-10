@@ -1,24 +1,30 @@
 use std::time::Duration;
 
 use crate::config;
-use anyhow::{anyhow, Context, Result};
-use framework::cloudflare::supervisor::{types::EdgeRegionLocation, Supervisor};
+use anyhow::{anyhow, Context};
+use anyhow::Result;
+use framework::cloudflare::{supervisor::{types::EdgeRegionLocation, Supervisor, TunnelAuth}, api::Auth, self};
 use log::info;
 use tokio::{select, time};
 use utils::context::wait::SuperContext;
 
 pub async fn start(cfg: config::Config) -> Result<()> {
+    let cf_api = cloudflare::api::Client::new(cfg.cloudflare.get_account_id(), Auth::ApiToken(cfg.cloudflare.get_api_token()));
+
+    let token = cf_api.get_tunnel_token(cfg.cloudflare.get_tunnel_id().as_str()).await?;
+
     let (context, handle) = SuperContext::new(None);
-    let mut supervisor = Supervisor::new(&EdgeRegionLocation::AUTO).await?;
+    let mut supervisor = Supervisor::new(&EdgeRegionLocation::AUTO, TunnelAuth::new(token.as_str())?).await?;
 
     let main = tokio::spawn(async move {
-        supervisor.start(context.clone()).await.unwrap();
+        supervisor.start(context.clone()).await?;
+        Ok::<(), anyhow::Error>(())
     });
 
     select! {
         r = main => {
             info!("Supervisor exited");
-            r?;
+            r??; // this is a double question mark, it unwraps the result from the promise and then unwraps the result from the return.
         }
         r = tokio::signal::ctrl_c() => {
             if let Err(err) = r {
@@ -30,17 +36,14 @@ pub async fn start(cfg: config::Config) -> Result<()> {
     }
 
     let shutdown = async {
-        if cfg.get_shutdown_timeout().is_some() {
-            time::timeout(
-                Duration::from_secs(cfg.get_shutdown_timeout().unwrap()),
-                async {
-                    let _ = handle.cancel().await;
-                },
-            )
+        if let Some(timeout) = cfg.get_shutdown_timeout() {
+            time::timeout(Duration::from_secs(timeout), async {
+                let _ = handle.cancel().await;
+            })
             .await
             .context(format!(
                 "Shutdown timedout after {}s - force shutting down",
-                cfg.get_shutdown_timeout().unwrap()
+                timeout,
             ))?;
         } else {
             let _ = handle.cancel().await;

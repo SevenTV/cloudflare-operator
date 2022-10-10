@@ -1,3 +1,4 @@
+use anyhow::Result;
 use serde::Deserialize;
 use serde_env::from_env;
 
@@ -9,6 +10,6 @@ struct Env {
     cfi: Config,
 }
 
-pub fn parse() -> Config {
-    from_env::<Env>().unwrap().cfi
+pub fn parse() -> Result<Config> {
+    Ok(from_env::<Env>()?.cfi)
 }

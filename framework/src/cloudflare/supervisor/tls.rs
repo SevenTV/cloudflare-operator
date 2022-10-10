@@ -1,6 +1,7 @@
 use std::{collections::HashMap, io::BufReader};
 
-use anyhow::{anyhow, Result};
+use anyhow::anyhow;
+use anyhow::Result;
 use rustls::Certificate;
 
 use super::types::{Protocol, TLSSettings};
@@ -98,13 +99,15 @@ pub(super) async fn create_tunnel_tls_config(settings: TLSSettings) -> Result<Ro
     let config = rustls::ClientConfig::builder().with_safe_defaults();
 
     let mut roots = rustls::RootCertStore::empty();
-    for cert in rustls_native_certs::load_native_certs().expect("could not load platform certs") {
-        roots.add(&rustls::Certificate(cert.0)).unwrap();
+    for cert in rustls_native_certs::load_native_certs()
+        .map_err(|e| anyhow!("Failed to load native certs: {}", e))?
+    {
+        roots.add(&rustls::Certificate(cert.0))?;
     }
 
-    create_cloudflare_cert_blocks()?.iter().for_each(|cert| {
-        roots.add(cert).unwrap();
-    });
+    for cert in create_cloudflare_cert_blocks()? {
+        roots.add(&cert)?;
+    }
 
     let mut config = config.with_root_certificates(roots).with_no_client_auth();
 

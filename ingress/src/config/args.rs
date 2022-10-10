@@ -1,3 +1,4 @@
+use anyhow::Result;
 use clap::{Arg, ArgAction, Command};
 
 use super::{Config, ConfigCloudflare, ConfigKubernetes};
@@ -12,7 +13,7 @@ macro_rules! bool_optional {
     };
 }
 
-pub fn parse() -> Config {
+pub fn parse() -> Result<Config> {
     let matches = Command::new("cloudflared-ingress")
         .version("1.0")
         .author("Troy Benson <troy@7tv.app>")
@@ -81,8 +82,11 @@ pub fn parse() -> Config {
         )
         .get_matches();
 
-    return Config {
-        debug: bool_optional!(matches.get_one::<bool>("debug").unwrap().to_owned()),
+    Ok(Config {
+        debug: bool_optional!(matches
+            .get_one::<bool>("debug")
+            .unwrap_or(&false)
+            .to_owned()),
         shutdown_timeout: matches.get_one::<u64>("shutdown_timeout").cloned(),
         kubernetes: ConfigKubernetes {
             kubeconfig: matches.get_one::<String>("kubernetes.kubeconfig").cloned(),
@@ -94,7 +98,7 @@ pub fn parse() -> Config {
                 .cloned(),
             watch_ingresses_without_class: bool_optional!(matches
                 .get_one::<bool>("kubernetes.watch_ingresses_without_class")
-                .unwrap()
+                .unwrap_or(&false)
                 .to_owned()),
         },
         cloudflare: ConfigCloudflare {
@@ -103,5 +107,5 @@ pub fn parse() -> Config {
             api_token: matches.get_one::<String>("cloudflare.api_token").cloned(),
         },
         config_file: matches.get_one::<String>("config_file").cloned(),
-    };
+    })
 }

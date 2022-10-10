@@ -13,6 +13,8 @@ use self::{
     types::{EdgeRegionLocation, Protocol},
 };
 
+pub use super::rpc::types::TunnelAuth;
+
 mod dns;
 mod edge;
 mod tls;
@@ -23,10 +25,11 @@ pub struct Supervisor {
     id: Uuid,
     tracker: EdgeTracker,
     tls: Arc<Mutex<HashMap<Protocol, tls::RootCert>>>,
+    auth: TunnelAuth,
 }
 
 impl Supervisor {
-    pub async fn new(location: &EdgeRegionLocation) -> Result<Self> {
+    pub async fn new(location: &EdgeRegionLocation, auth: TunnelAuth) -> Result<Self> {
         let edges = resolve_edge_addr(location).await?;
         let mut ips = Vec::new();
 
@@ -46,19 +49,24 @@ impl Supervisor {
 
         Ok(Supervisor {
             id: Uuid::new_v4(),
+            auth,
             tls: Arc::new(Mutex::new(tls::get_proto_edge_tls_map().await?)),
             tracker: EdgeTracker::new(ips),
         })
     }
 
     pub async fn start(&mut self, ctx: SuperContext) -> Result<()> {
-        let tls = self.tls.lock().await.get(&Protocol::QUIC).unwrap().clone();
+        let tls = self.tls.lock().await.get(&Protocol::QUIC).unwrap().clone(); // todo
         let ip = self.tracker.get(&0).await?;
 
         let mut ctx = ctx;
         let sub_ctx = ctx.clone();
 
-        let edge = EdgeTunnelServer::new(0);
+        let edge = EdgeTunnelServer::new(0, self.auth.clone());
+
+        // this is important because we should be able to cancel the tunnel server if we want to.
+        // this select statement allows us to continue if the ctx gets cancelled.
+        // which will cancel the tunnel server.
 
         tokio::select! {
             _ = ctx.done() => {

@@ -1,30 +1,52 @@
-use capnp_rpc::{rpc_twoparty_capnp, twoparty::VatId, RpcSystem, VatNetwork};
-use futures::AsyncRead;
+use capnp_rpc::{
+    twoparty::{self, VatId},
+    RpcSystem, VatNetwork,
+};
 use procmacros::generated_mod;
+use quinn::{RecvStream, SendStream};
+
+use self::clients::{RegistrationServerClient, TunnelServerClient};
 
 generated_mod!(pub tunnelrpc_capnp "tunnelrpc_capnp.rs");
 
+pub mod alias;
+pub mod clients;
 mod logged;
+pub mod types;
 
-pub(crate) struct TunnelServerClient {
-    client: tunnelrpc_capnp::tunnel_server::Client,
+pub(crate) struct ControlStreamManager {
     rpc_system: RpcSystem<VatId>,
+
+    tunnel_server: TunnelServerClient,
 }
 
-impl TunnelServerClient {
+impl ControlStreamManager {
     pub fn new(network: Box<dyn VatNetwork<VatId>>) -> Self {
         let mut rpc_system = RpcSystem::new(network, None);
 
-        let client: tunnelrpc_capnp::tunnel_server::Client =
-            rpc_system.bootstrap(rpc_twoparty_capnp::Side::Server);
+        let rclient = RegistrationServerClient::new_from_system(&mut rpc_system);
+        let tclient = TunnelServerClient::new_from_system(&mut rpc_system, rclient);
 
-        TunnelServerClient { client, rpc_system }
+        Self {
+            rpc_system,
+            tunnel_server: tclient,
+        }
+    }
+
+    pub fn get_tunnel_client(&self) -> TunnelServerClient {
+        self.tunnel_server.clone()
     }
 }
 
-pub(crate) fn log_network<T>(network: Box<dyn VatNetwork<T>>) -> Box<dyn VatNetwork<T>>
-where
-    T: AsyncRead + 'static + Unpin,
-{
-    logged::LoggedVatNetwork::<T>::new(network).boxed()
+pub(crate) fn new_network(send: SendStream, recv: RecvStream) -> Box<dyn VatNetwork<VatId>> {
+    log_network(Box::new(twoparty::VatNetwork::new(
+        recv,
+        send,
+        VatId::Client,
+        Default::default(),
+    )))
+}
+
+pub(crate) fn log_network(network: Box<dyn VatNetwork<VatId>>) -> Box<dyn VatNetwork<VatId>> {
+    logged::LoggedVatNetwork::new(network).boxed()
 }

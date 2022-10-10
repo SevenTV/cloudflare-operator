@@ -1,55 +1,39 @@
 use capnp::{capability::Promise, Result};
-use capnp_rpc::{Connection, VatNetwork};
-use futures::{AsyncRead, FutureExt};
+use capnp_rpc::{twoparty::VatId, Connection, VatNetwork};
+use futures::FutureExt;
 use log::debug;
 
-pub(super) struct LoggedVatNetwork<T>
-where
-    T: AsyncRead + 'static + Unpin,
-{
-    network: Box<dyn VatNetwork<T>>,
+pub(super) struct LoggedVatNetwork {
+    network: Box<dyn VatNetwork<VatId>>,
 }
 
-impl<T> LoggedVatNetwork<T>
-where
-    T: AsyncRead + Unpin,
-{
-    pub fn new(network: Box<dyn VatNetwork<T>>) -> Self {
+impl LoggedVatNetwork {
+    pub fn new(network: Box<dyn VatNetwork<VatId>>) -> Self {
         Self { network }
     }
 
-    pub fn boxed(self) -> Box<dyn VatNetwork<T>> {
+    pub fn boxed(self) -> Box<dyn VatNetwork<VatId>> {
         Box::new(self)
     }
 }
 
-async fn wrap_connection<T>(
-    result: Result<Box<dyn Connection<T>>>,
-) -> Result<Box<dyn Connection<T>>>
-where
-    T: AsyncRead + Unpin + 'static,
-{
+async fn wrap_connection(
+    result: Result<Box<dyn Connection<VatId>>>,
+) -> Result<Box<dyn Connection<VatId>>> {
     match result {
         Ok(connection) => Ok(LoggedConnection::new(connection).boxed()),
         Err(err) => Err(err),
     }
 }
 
-impl<T> VatNetwork<T> for LoggedVatNetwork<T>
-where
-    T: AsyncRead + Unpin,
-{
-    fn accept(&mut self) -> Promise<Box<dyn Connection<T>>, ::capnp::Error> {
+impl VatNetwork<VatId> for LoggedVatNetwork {
+    fn accept(&mut self) -> Promise<Box<dyn Connection<VatId>>, ::capnp::Error> {
         debug!("accepting connection");
 
-        Promise::from_future(
-            self.network
-                .accept()
-                .then(|result| wrap_connection::<T>(result)),
-        )
+        Promise::from_future(self.network.accept().then(|result| wrap_connection(result)))
     }
 
-    fn connect(&mut self, id: T) -> Option<Box<dyn Connection<T>>> {
+    fn connect(&mut self, id: VatId) -> Option<Box<dyn Connection<VatId>>> {
         debug!("connect to connection");
 
         match self.network.connect(id) {
@@ -63,31 +47,22 @@ where
     }
 }
 
-struct LoggedConnection<T>
-where
-    T: AsyncRead + 'static + Unpin,
-{
-    connection: Box<dyn Connection<T>>,
+struct LoggedConnection {
+    connection: Box<dyn Connection<VatId>>,
 }
 
-impl<T> LoggedConnection<T>
-where
-    T: AsyncRead + Unpin,
-{
-    fn new(connection: Box<dyn Connection<T>>) -> Self {
+impl LoggedConnection {
+    fn new(connection: Box<dyn Connection<VatId>>) -> Self {
         Self { connection }
     }
 
-    fn boxed(self) -> Box<dyn Connection<T>> {
+    fn boxed(self) -> Box<dyn Connection<VatId>> {
         Box::new(self)
     }
 }
 
-impl<T> Connection<T> for LoggedConnection<T>
-where
-    T: AsyncRead + Unpin,
-{
-    fn get_peer_vat_id(&self) -> T {
+impl Connection<VatId> for LoggedConnection {
+    fn get_peer_vat_id(&self) -> VatId {
         self.connection.get_peer_vat_id()
     }
 

@@ -1,6 +1,7 @@
 use std::{collections::HashMap, net::IpAddr, sync::Arc};
 
-use anyhow::{anyhow, Result};
+use anyhow::anyhow;
+use anyhow::Result;
 use tokio::sync::Mutex;
 
 #[derive(Clone)]
