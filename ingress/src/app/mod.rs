@@ -1,28 +1,42 @@
 use std::time::Duration;
 
 use crate::config;
-use anyhow::{anyhow, Context};
 use anyhow::Result;
-use framework::cloudflare::{supervisor::{types::EdgeRegionLocation, Supervisor, TunnelAuth}, api::Auth, self};
+use anyhow::{anyhow, Context};
+use framework::cloudflare::{
+    self,
+    api::Auth,
+    supervisor::{types::EdgeRegionLocation, Supervisor, TunnelAuth},
+};
 use log::info;
 use tokio::{select, time};
 use utils::context::wait::SuperContext;
 
 pub async fn start(cfg: config::Config) -> Result<()> {
-    let cf_api = cloudflare::api::Client::new(cfg.cloudflare.get_account_id(), Auth::ApiToken(cfg.cloudflare.get_api_token()));
+    let cf_api = cloudflare::api::Client::new(
+        cfg.cloudflare.get_account_id(),
+        Auth::ApiToken(cfg.cloudflare.get_api_token()),
+    );
 
-    let token = cf_api.get_tunnel_token(cfg.cloudflare.get_tunnel_id().as_str()).await?;
+    let token = cf_api
+        .get_tunnel_token(cfg.cloudflare.get_tunnel_id().as_str())
+        .await?;
+
+    let tkn = TunnelAuth::new(token.as_str())?;
 
     let (context, handle) = SuperContext::new(None);
-    let mut supervisor = Supervisor::new(&EdgeRegionLocation::AUTO, TunnelAuth::new(token.as_str())?).await?;
+    
+    let supervisor = Supervisor::new(&EdgeRegionLocation::AUTO, tkn).await?;
 
-    let main = tokio::spawn(async move {
-        supervisor.start(context.clone()).await?;
-        Ok::<(), anyhow::Error>(())
+    info!("Starting supervisor");
+
+    let supervisor_handle = tokio::spawn(async move {
+        supervisor.start(context).await
     });
 
+
     select! {
-        r = main => {
+        r = supervisor_handle => {
             info!("Supervisor exited");
             r??; // this is a double question mark, it unwraps the result from the promise and then unwraps the result from the return.
         }
@@ -61,6 +75,8 @@ pub async fn start(cfg: config::Config) -> Result<()> {
             info!("force shutting down");
         }
     }
+
+    info!("supervisor stopped");
 
     Ok(())
 }

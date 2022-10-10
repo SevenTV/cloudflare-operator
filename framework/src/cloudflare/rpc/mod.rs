@@ -8,6 +8,7 @@ use quinn::{RecvStream, SendStream};
 use self::clients::{RegistrationServerClient, TunnelServerClient};
 
 generated_mod!(pub tunnelrpc_capnp "tunnelrpc_capnp.rs");
+generated_mod!(pub quic_metadata_protocol_capnp "quic_metadata_protocol_capnp.rs");
 
 pub mod alias;
 pub mod clients;
@@ -15,26 +16,26 @@ mod logged;
 pub mod types;
 
 pub(crate) struct ControlStreamManager {
-    rpc_system: RpcSystem<VatId>,
-
     tunnel_server: TunnelServerClient,
 }
 
 impl ControlStreamManager {
-    pub fn new(network: Box<dyn VatNetwork<VatId>>) -> Self {
+    pub fn new(network: Box<dyn VatNetwork<VatId>>) -> (Self, RpcSystem<VatId>) {
         let mut rpc_system = RpcSystem::new(network, None);
 
         let rclient = RegistrationServerClient::new_from_system(&mut rpc_system);
         let tclient = TunnelServerClient::new_from_system(&mut rpc_system, rclient);
 
-        Self {
+        (
+            Self {
+                tunnel_server: tclient,
+            },
             rpc_system,
-            tunnel_server: tclient,
-        }
+        )
     }
 
-    pub fn get_tunnel_client(&self) -> TunnelServerClient {
-        self.tunnel_server.clone()
+    pub fn get_tunnel_client(&self) -> &TunnelServerClient {
+        &self.tunnel_server
     }
 }
 

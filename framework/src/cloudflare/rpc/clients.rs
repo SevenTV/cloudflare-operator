@@ -5,6 +5,7 @@
 
 use anyhow::Result;
 use capnp_rpc::{twoparty::VatId, RpcSystem};
+use log::info;
 
 use super::{
     alias::interfaces::{
@@ -34,7 +35,12 @@ impl RegistrationServerClient {
         let mut req = self.inner.register_connection_request();
         request.to_primitive(req.get());
 
+        info!("Sending register_connection request");
+
         let response = req.send().promise.await?;
+
+        info!("Received register_connection response");
+
         let response = response.get()?;
 
         registration_server::RegisterConnectionResults::from_primitive(response)

@@ -1,8 +1,10 @@
 use std::sync::Arc;
 
-use anyhow::anyhow;
-use anyhow::Result;
+use anyhow::{anyhow, Result};
+use futures::StreamExt;
 use log::info;
+use tokio::select;
+use tokio_util::task::LocalPoolHandle;
 use utils::context::wait::SuperContext;
 
 use crate::cloudflare::rpc::alias::{
@@ -26,23 +28,27 @@ impl EdgeTunnelServer {
     }
 
     pub async fn serve(
-        &self,
+        self,
         ctx: SuperContext,
         protocol: Protocol,
-        addr: &IpPortHost,
+        addr: IpPortHost,
         tls_config: RootCert,
     ) -> Result<()> {
-        match protocol {
-            Protocol::QUIC => self.serve_quic(ctx, addr, tls_config).await,
-            Protocol::HTTP2 => self.serve_http2(ctx, addr, tls_config).await,
-            _ => Err(anyhow!("Protocol not supported")),
-        }
+        LocalPoolHandle::new(1).spawn_pinned(|| {
+            async move {
+                match protocol {
+                    Protocol::QUIC => Ok(self.serve_quic(ctx, addr, tls_config).await?),
+                    Protocol::HTTP2 => Ok(self.serve_http2(ctx, addr, tls_config).await?),
+                    _ => Err(anyhow!("Protocol not supported")),
+                }
+            }
+        }).await?
     }
 
     pub async fn serve_quic(
-        &self,
+        self,
         ctx: SuperContext,
-        addr: &IpPortHost,
+        addr: IpPortHost,
         tls_config: RootCert,
     ) -> Result<()> {
         let client_crypto = tls_config.config;
@@ -55,48 +61,83 @@ impl EdgeTunnelServer {
             .await
             .map_err(|e| anyhow!("failed to connect: {}", e))?;
 
-        let (send, recv) = conn.connection.open_bi().await?;
-
-        // We can now start using capnp to send and receive data.
-
-        let control_stream = ControlStreamManager::new(new_network(send, recv));
-
-        let tunnel_client = control_stream.get_tunnel_client();
-
-        let auth = self.auth.clone();
-
-        let resp = tunnel_client.get_registration_client()
-            .register_connection(RegisterConnectionParams {
-                auth: structs::TunnelAuth {
-                    account_tag: auth.account_tag.clone(),
-                    tunnel_secret: auth.tunnel_secret.into_bytes(),
-                },
-                tunnel_id: self.auth.tunnel_id.into_bytes().to_vec(),
-                conn_index: (self.id as u8),
-                options: structs::ConnectionOptions {
-                    client: structs::ClientInfo {
-                        client_id: auth.tunnel_id.as_bytes().to_vec(),
-                        version: "test".to_string(),
-                        arch: "test".to_string(),
-                        features: vec![],
+        let control_fut = {
+            let (send, recv) = conn.connection.open_bi().await?;
+    
+            let (control_stream, system) = ControlStreamManager::new(new_network(send, recv));
+    
+            let system_fut = {
+                let mut ctx = ctx.clone();
+                tokio::task::spawn_local(async move {
+                    select! {
+                        r = system => {
+                            info!("system exited with {:?}", r);
+                            return Ok(r?);
+                        }
+                        _ = ctx.done() => {
+                            info!("Context closed");
+                        }
+                    }
+                    return Ok::<(), anyhow::Error>(());
+                })
+            };
+    
+            let tunnel_client = control_stream.get_tunnel_client();
+    
+            let auth = self.auth.clone();
+    
+            info!("Registering tunnel with edge");
+    
+            let resp = tunnel_client
+                .get_registration_client()
+                .register_connection(RegisterConnectionParams {
+                    auth: structs::TunnelAuth {
+                        account_tag: auth.account_tag.clone(),
+                        tunnel_secret: auth.tunnel_secret_decode()?,
                     },
-                    origin_local_ip: Vec::new(),
-                    replace_existing: true,
-                    compression_quality: 0,
-                    num_previous_attempts: 0,
-                },
-            })
-            .await.map_err(|e| anyhow!("failed to register connection: {:#}", e))?;
+                    tunnel_id: self.auth.tunnel_id.into_bytes().to_vec(),
+                    conn_index: (self.id as u8),
+                    options: structs::ConnectionOptions {
+                        client: structs::ClientInfo {
+                            client_id: auth.tunnel_id.into_bytes().to_vec(),
+                            version: "test".to_string(),
+                            arch: "test".to_string(),
+                            features: vec![],
+                        },
+                        origin_local_ip: Vec::new(),
+                        replace_existing: true,
+                        compression_quality: 0,
+                        num_previous_attempts: 0,
+                    },
+                })
+                .await
+                .map_err(|e| anyhow!("failed to register connection: {:#}", e))?;
+    
+            info!("Registered connection: {:?}", resp);
 
-        info!("Registered connection: {:?}", resp);
+            system_fut
+        };
+
+        let datagrams_fut = {
+            tokio::task::spawn_local(async move {
+                let mut stream = conn.datagrams.enumerate();
+                while let Some((size, datagram)) = stream.next().await {
+                    info!("Got datagram: {:?}", datagram.map_err(|e| anyhow!("failed to read datagram: {}", e))?);
+                }
+
+                return Ok::<(), anyhow::Error>(());
+            })
+        };
+
+        info!("{:?}", tokio::join!(control_fut, datagrams_fut));
 
         Ok(())
     }
 
     pub async fn serve_http2(
-        &self,
+        self,
         _ctx: SuperContext,
-        _addr: &IpPortHost,
+        _addr: IpPortHost,
         _tls_config: RootCert,
     ) -> Result<()> {
         panic!("not implemented")

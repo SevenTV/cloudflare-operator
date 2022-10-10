@@ -343,11 +343,11 @@ pub mod structs {
 
     #[derive(Debug)]
     pub struct ConnectionOptions {
-       pub client: ClientInfo,
-       pub origin_local_ip: Vec<u8>,
-       pub replace_existing: bool,
-       pub compression_quality: u8,
-       pub num_previous_attempts: u8,
+        pub client: ClientInfo,
+        pub origin_local_ip: Vec<u8>,
+        pub replace_existing: bool,
+        pub compression_quality: u8,
+        pub num_previous_attempts: u8,
     }
 
     impl ConnectionOptions {

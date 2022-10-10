@@ -65,7 +65,7 @@ pub struct TunnelAuth {
     #[serde(rename = "a")]
     pub account_tag: String,
     #[serde(rename = "s")]
-    pub tunnel_secret: String,
+    pub tunnel_secret: String, // in base64
     #[serde(rename = "t")]
     pub tunnel_id: Uuid,
 }
@@ -80,5 +80,9 @@ impl TunnelAuth {
             serde_json::to_string(self)?,
             base64::URL_SAFE_NO_PAD,
         ))
+    }
+
+    pub fn tunnel_secret_decode(&self) -> Result<Vec<u8>> {
+        Ok(base64::decode_config(&self.tunnel_secret, base64::URL_SAFE_NO_PAD)?)
     }
 }

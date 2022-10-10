@@ -1,6 +1,7 @@
-use std::{collections::HashMap, sync::Arc};
+use std::{collections::HashMap, sync::Arc, time::Duration};
 
 use anyhow::Result;
+use futures::select;
 use log::{error, info};
 use tokio::sync::Mutex;
 use utils::context::wait::SuperContext;
@@ -14,6 +15,7 @@ use self::{
 };
 
 pub use super::rpc::types::TunnelAuth;
+use tokio_util::task::LocalPoolHandle;
 
 mod dns;
 mod edge;
@@ -55,27 +57,21 @@ impl Supervisor {
         })
     }
 
-    pub async fn start(&mut self, ctx: SuperContext) -> Result<()> {
+    pub async fn start(mut self, ctx: SuperContext) -> Result<()> {
         let tls = self.tls.lock().await.get(&Protocol::QUIC).unwrap().clone(); // todo
         let ip = self.tracker.get(&0).await?;
-
-        let mut ctx = ctx;
-        let sub_ctx = ctx.clone();
-
-        let edge = EdgeTunnelServer::new(0, self.auth.clone());
 
         // this is important because we should be able to cancel the tunnel server if we want to.
         // this select statement allows us to continue if the ctx gets cancelled.
         // which will cancel the tunnel server.
 
-        tokio::select! {
-            _ = ctx.done() => {
-                info!("Context cancelled");
-            }
-            _ = edge.serve(sub_ctx, Protocol::QUIC, &ip, tls) => {
-                error!("Tunnel server exited");
-            }
-        }
+        let fut = {
+            let server = EdgeTunnelServer::new(0, self.auth.clone());
+            info!("Starting tunnel server");
+            server.serve(ctx.clone(), Protocol::QUIC, ip.clone(), tls.clone())
+        };
+
+        fut.await?;
 
         self.tracker.release(&0).await;
 
