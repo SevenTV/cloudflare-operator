@@ -16,14 +16,17 @@ impl SuperContext {
 
         let (sender, receiver) = tokio::sync::oneshot::channel();
 
+        let send = Arc::new(sender);
+
         (
             Self {
                 ctx,
-                _sender: Arc::new(sender),
+                _sender: send.clone(),
             },
             SuperHandle {
                 handle,
                 _parent: None,
+                _sender: send,
                 _receiver: receiver,
             },
         )
@@ -33,15 +36,17 @@ impl SuperContext {
         let (ctx, handle) = RefContext::with_parent(&self.ctx, timeout);
 
         let (sender, receiver) = tokio::sync::oneshot::channel();
+        let send = Arc::new(sender);
 
         (
             Self {
                 ctx,
-                _sender: Arc::new(sender),
+                _sender: send.clone(),
             },
             SuperHandle {
                 handle,
                 _parent: Some(self._sender.clone()),
+                _sender: send,
                 _receiver: receiver,
             },
         )
@@ -84,11 +89,16 @@ pub struct SuperHandle {
     handle: Handle,
     _parent: Option<Arc<tokio::sync::oneshot::Sender<()>>>,
     _receiver: tokio::sync::oneshot::Receiver<()>,
+    _sender: Arc<tokio::sync::oneshot::Sender<()>>,
 }
 
 impl SuperHandle {
     pub fn cancel(self) -> tokio::sync::oneshot::Receiver<()> {
         self.handle.cancel();
         self._receiver
+    }
+
+    pub fn decompose(self) -> (Handle, tokio::sync::oneshot::Receiver<()>) {
+        (self.handle, self._receiver)
     }
 }

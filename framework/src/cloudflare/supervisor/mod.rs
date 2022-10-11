@@ -62,20 +62,15 @@ impl Supervisor {
         let tls = self.tls.lock().await.get(&Protocol::QUIC).unwrap().clone(); // todo
         let ip = self.tracker.get(&0).await?;
 
-        // this is important because we should be able to cancel the tunnel server if we want to.
-        // this select statement allows us to continue if the ctx gets cancelled.
-        // which will cancel the tunnel server.
+        let server = EdgeTunnelClient::new(0, self.auth.clone());
+        info!("Starting tunnel server");
 
-        let fut = {
-            let server = EdgeTunnelClient::new(0, self.auth.clone());
-            info!("Starting tunnel server");
-            server.serve(ctx.clone(), Protocol::QUIC, ip.clone(), tls.clone())
-        };
-
-        fut.await?;
+        let resp = server
+            .serve(ctx.clone(), Protocol::QUIC, ip.clone(), tls.clone())
+            .await;
 
         self.tracker.release(&0).await;
 
-        Ok(())
+        resp
     }
 }
