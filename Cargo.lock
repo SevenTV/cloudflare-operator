@@ -482,6 +482,7 @@ dependencies = [
  "bitflags",
  "bytes",
  "capnp",
+ "capnp-futures",
  "capnp-rpc",
  "capnpc",
  "chrono",

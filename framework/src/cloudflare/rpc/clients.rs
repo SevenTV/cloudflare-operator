@@ -8,7 +8,7 @@ use capnp_rpc::{twoparty::VatId, RpcSystem};
 use log::info;
 
 use super::{
-    alias::interfaces::{
+    tunnelrpc::interfaces::{
         configuration_manager, registration_server, session_manager, tunnel_server,
     },
     tunnelrpc_capnp,

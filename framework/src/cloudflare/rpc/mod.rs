@@ -10,9 +10,10 @@ use self::clients::{RegistrationServerClient, TunnelServerClient};
 generated_mod!(pub tunnelrpc_capnp "tunnelrpc_capnp.rs");
 generated_mod!(pub quic_metadata_protocol_capnp "quic_metadata_protocol_capnp.rs");
 
-pub mod alias;
 pub mod clients;
 mod logged;
+pub mod quic_metadata_protocol;
+pub mod tunnelrpc;
 pub mod types;
 
 pub(crate) struct ControlStreamManager {

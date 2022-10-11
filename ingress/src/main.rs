@@ -9,7 +9,7 @@ use log::{error, info};
 
 #[tokio::main]
 async fn main() {
-    console_subscriber::init();
+    // console_subscriber::init();
 
     let config = match setup::setup() {
         Ok(config) => config,

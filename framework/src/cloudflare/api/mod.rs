@@ -14,18 +14,13 @@ pub enum Auth {
 }
 
 pub struct Client {
-    client: reqwest::Client,
     auth: Auth,
     account_id: String,
 }
 
 impl Client {
     pub fn new(account_id: String, auth: Auth) -> Self {
-        Self {
-            client: reqwest::Client::new(),
-            account_id,
-            auth,
-        }
+        Self { account_id, auth }
     }
 
     fn add_auth(&self, request: reqwest::RequestBuilder) -> reqwest::RequestBuilder {
@@ -45,7 +40,9 @@ impl Client {
     ) -> Result<(R, StatusCode)> {
         debug!("{} {}", method, url);
 
-        let mut request = self.add_auth(self.client.request(method.clone(), url));
+        let client = reqwest::Client::new();
+
+        let mut request = self.add_auth(client.request(method.clone(), url));
 
         if let Some(body) = body {
             request = request.json(body);

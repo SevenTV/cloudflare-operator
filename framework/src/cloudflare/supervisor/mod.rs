@@ -16,7 +16,6 @@ use self::{
 
 pub use super::rpc::types::TunnelAuth;
 
-mod datagram;
 mod dns;
 mod edge;
 mod tls;
@@ -60,17 +59,40 @@ impl Supervisor {
 
     pub async fn start(mut self, ctx: SuperContext) -> Result<()> {
         let tls = self.tls.lock().await.get(&Protocol::QUIC).unwrap().clone(); // todo
-        let ip = self.tracker.get(&0).await?;
 
-        let server = EdgeTunnelClient::new(0, self.auth.clone());
-        info!("Starting tunnel server");
+        let mut handles = Vec::new();
 
-        let resp = server
-            .serve(ctx.clone(), Protocol::QUIC, ip.clone(), tls.clone())
-            .await;
+        for i in 0..5 {
+            let ip = self.tracker.get(&i).await?;
+            let ctx = ctx.clone();
+            let auth = self.auth.clone();
+            let tls = tls.clone();
 
-        self.tracker.release(&0).await;
+            handles.push(tokio::spawn(async move {
+                Self::start_helper(ctx, Protocol::QUIC, i, ip, tls, auth).await
+            }));
+        }
 
-        resp
+        for handle in handles {
+            handle.await??;
+        }
+
+        Ok(())
+    }
+
+    async fn start_helper(
+        ctx: SuperContext,
+        protocol: Protocol,
+        id: u32,
+        ip: IpPortHost,
+        tls: tls::RootCert,
+        auth: TunnelAuth,
+    ) -> Result<()> {
+        let server = EdgeTunnelClient::new(id, auth);
+        info!("Starting tunnel server {}", id);
+
+        server
+            .serve(ctx.clone(), protocol, ip.clone(), tls.clone())
+            .await
     }
 }

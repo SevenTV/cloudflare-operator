@@ -55,27 +55,6 @@ pub mod primitives {
     pub use super::tunnelrpc_capnp::configuration_manager::update_configuration_results as UpdateConfigurationResults;
 }
 
-macro_rules! vec_type_to_primitive {
-    ($vec:ident, $builder:ident) => {{
-        let mut builder = $builder;
-        for (index, t) in $vec.iter().enumerate() {
-            t.to_owned()
-                .to_primitive(builder.reborrow().get(index as u32));
-        }
-    }};
-}
-
-macro_rules! vec_type_from_primitive {
-    ($reader:ident, $t:ident) => {{
-        let mut vec = Vec::new();
-        for i in 0..$reader.len() {
-            vec.push($t::from_primitive($reader.get(i))?);
-        }
-
-        vec
-    }};
-}
-
 pub mod structs {
     #![allow(dead_code, unused_variables, unused_mut)]
 
@@ -189,7 +168,7 @@ pub mod structs {
             {
                 let b = builder.reborrow().init_tags(self.tags.len() as u32);
                 let t = &self.tags;
-                vec_type_to_primitive!(t, b);
+                utils::vec_type_to_primitive!(t, b);
             }
 
             builder.set_connection_id(self.connection_id);
@@ -210,7 +189,7 @@ pub mod structs {
     impl RegistrationOptions {
         pub fn from_primitive(primitive: primitives::RegistrationOptions::Reader) -> Result<Self> {
             let t = primitive.get_tags()?;
-            let tags = vec_type_from_primitive!(t, Tag);
+            let tags = utils::vec_type_from_primitive!(t, Tag);
 
             Ok(Self {
                 client_id: primitive.get_client_id()?.to_string(),

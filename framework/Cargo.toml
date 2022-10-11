@@ -37,3 +37,4 @@ tokio-util = { version = "0.7.4", features = ["full"] }
 bytes = "1.2.1"
 num_enum = "0.5.7"
 tuple-conv = "1.0.1"
+capnp-futures = "0.14.2"
