@@ -1,26 +1,27 @@
-use std::{collections::HashMap, sync::Arc, time::Duration};
+use std::{collections::HashMap, sync::Arc};
 
 use anyhow::Result;
-use futures::select;
-use log::{error, info};
+use log::info;
 use tokio::sync::Mutex;
 use utils::context::wait::SuperContext;
 use uuid::Uuid;
 
+use crate::cloudflare::supervisor::tunnel::EdgeTunnelClient;
+
 use self::{
     dns::resolve_edge_addr,
     edge::{EdgeTracker, IpPortHost},
-    tunnel::EdgeTunnelServer,
     types::{EdgeRegionLocation, Protocol},
 };
 
 pub use super::rpc::types::TunnelAuth;
-use tokio_util::task::LocalPoolHandle;
 
+mod datagram;
 mod dns;
 mod edge;
 mod tls;
 mod tunnel;
+
 pub mod types;
 
 pub struct Supervisor {
@@ -66,7 +67,7 @@ impl Supervisor {
         // which will cancel the tunnel server.
 
         let fut = {
-            let server = EdgeTunnelServer::new(0, self.auth.clone());
+            let server = EdgeTunnelClient::new(0, self.auth.clone());
             info!("Starting tunnel server");
             server.serve(ctx.clone(), Protocol::QUIC, ip.clone(), tls.clone())
         };

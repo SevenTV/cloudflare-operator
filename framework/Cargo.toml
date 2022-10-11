@@ -34,3 +34,6 @@ quinn = "0.8.5"
 async-trait = "0.1.57"
 send_wrapper = { version = "0.6.0", features = ["futures"] }
 tokio-util = { version = "0.7.4", features = ["full"] }
+bytes = "1.2.1"
+num_enum = "0.5.7"
+tuple-conv = "1.0.1"

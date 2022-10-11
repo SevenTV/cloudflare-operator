@@ -83,6 +83,9 @@ impl TunnelAuth {
     }
 
     pub fn tunnel_secret_decode(&self) -> Result<Vec<u8>> {
-        Ok(base64::decode_config(&self.tunnel_secret, base64::URL_SAFE_NO_PAD)?)
+        Ok(base64::decode_config(
+            &self.tunnel_secret,
+            base64::URL_SAFE_NO_PAD,
+        )?)
     }
 }

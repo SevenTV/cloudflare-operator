@@ -25,15 +25,12 @@ pub async fn start(cfg: config::Config) -> Result<()> {
     let tkn = TunnelAuth::new(token.as_str())?;
 
     let (context, handle) = SuperContext::new(None);
-    
+
     let supervisor = Supervisor::new(&EdgeRegionLocation::AUTO, tkn).await?;
 
     info!("Starting supervisor");
 
-    let supervisor_handle = tokio::spawn(async move {
-        supervisor.start(context).await
-    });
-
+    let supervisor_handle = tokio::spawn(async move { supervisor.start(context).await });
 
     select! {
         r = supervisor_handle => {
