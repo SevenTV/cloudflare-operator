@@ -147,6 +147,7 @@ impl RouteController {
 
             tokio::spawn(async move {
                 let mut manager = manager::Manager::new();
+                manager.graceful(ctx.clone()).await;
 
                 loop {
                     select! {
@@ -175,6 +176,9 @@ impl RouteController {
 
                             // then we can get all the ingress
                             Self::rebuild_ingress_from_config(&cfg, &mut rebuild);
+
+                            // remove tunnels with no ingress rules
+                            rebuild.cloudflare_tunnels.retain(|_, v| !v.ingress.is_empty());
 
                             // We now have a full rebuild config, we can now reconsolidate the ingress
                             manager.update(rebuild).await;

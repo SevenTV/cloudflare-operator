@@ -1,6 +1,6 @@
-pub enum IngressType {
-    CloudflareTunnel(CloudflareTunnel),
-}
+// pub enum IngressType {
+//     CloudflareTunnel(CloudflareTunnel),
+// }
 
 pub mod auth {
     #[derive(Debug, Clone, PartialEq, Eq, Hash)]

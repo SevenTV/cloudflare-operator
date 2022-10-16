@@ -12,6 +12,7 @@ use framework::incoming::cloudflare_tunnels::types::TunnelAuth;
 use framework::incoming::cloudflare_tunnels::Supervisor;
 use tokio::io::AsyncWriteExt;
 use tokio::select;
+use tokio::sync::Mutex;
 use tokio::sync::RwLock;
 use tracing::{error, info};
 use utils::context::wait::Context;
@@ -49,12 +50,11 @@ impl RunningTunnel {
 
         let id = self.inst_id;
 
-        let ctx = handle.spawn();
+        let mut ctx = handle.spawn();
         let auth = self.auth.clone();
         let rules = self.rules.clone();
 
         tokio::spawn(async move {
-            let mut ctx = ctx;
             loop {
                 select! {
                     _ = ctx.done() => {
@@ -75,7 +75,13 @@ impl RunningTunnel {
                         }
 
                         // TODO: wait a bit before trying again
-                        tokio::time::sleep(std::time::Duration::from_secs(5)).await;
+                        select! {
+                            _ = ctx.done() => {
+                                info!("context dropped, stopping tunnel");
+                                break;
+                            }
+                            _ = tokio::time::sleep(std::time::Duration::from_secs(5)) => {}
+                        }
                     }
                 }
             }
@@ -126,14 +132,28 @@ impl HandleHttpTrait for RunningTunnelHandle {
 }
 
 pub(super) struct Manager {
-    cloudflare_tunnels: HashMap<Uuid, (RunningTunnel, Handle)>,
+    cloudflare_tunnels: Arc<Mutex<HashMap<Uuid, (RunningTunnel, Handle)>>>,
 }
 
 impl Manager {
     pub fn new() -> Self {
         Self {
-            cloudflare_tunnels: HashMap::new(),
+            cloudflare_tunnels: Arc::new(Mutex::new(HashMap::new())),
         }
+    }
+
+    pub async fn graceful(&self, ctx: Context) {
+        let mp = self.cloudflare_tunnels.clone();
+
+        let mut ctx = ctx;
+        tokio::spawn(async move {
+            ctx.done().await;
+
+            let mut mp = mp.lock().await;
+            for (_, (_, handle)) in mp.drain() {
+                handle.cancel().await;
+            }
+        });
     }
 
     pub async fn update(&mut self, config: RebuildConfig) {
@@ -142,9 +162,10 @@ impl Manager {
 
     async fn update_tunnels(&mut self, config: &RebuildConfig) {
         let mut valid = HashMap::new();
+        let mut mp = self.cloudflare_tunnels.lock().await;
 
         for (id, tunnel) in config.cloudflare_tunnels.clone() {
-            if let Some(running_tunnel) = self.cloudflare_tunnels.get(&id) {
+            if let Some(running_tunnel) = mp.get(&id) {
                 running_tunnel.0.rebuild(tunnel.ingress).await;
             } else {
                 let api = api::cloudflare::Client::new(
@@ -177,21 +198,21 @@ impl Manager {
                 running_tunnel.rebuild(tunnel.ingress).await;
                 let handle = running_tunnel.serve().await;
 
-                self.cloudflare_tunnels.insert(id, (running_tunnel, handle));
+                mp.insert(id, (running_tunnel, handle));
             }
 
             valid.insert(id, ());
         }
 
         let mut to_remove = Vec::new();
-        for id in self.cloudflare_tunnels.keys() {
+        for id in mp.keys() {
             if !valid.contains_key(id) {
                 to_remove.push(*id);
             }
         }
 
         for id in to_remove {
-            if let Some((_, handle)) = self.cloudflare_tunnels.remove(&id) {
+            if let Some((_, handle)) = mp.remove(&id) {
                 handle.cancel().await;
             }
         }
