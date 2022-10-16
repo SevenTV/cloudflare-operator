@@ -3,39 +3,30 @@ use std::time::Duration;
 use crate::config;
 use anyhow::Result;
 use anyhow::{anyhow, Context};
-use framework::cloudflare::{
-    self,
-    api::Auth,
-    supervisor::{types::EdgeRegionLocation, Supervisor, TunnelAuth},
-};
-use log::info;
+
 use tokio::{select, time};
-use utils::context::wait::SuperContext;
+use tracing::info;
+use utils::context::wait::Handle;
+
+mod ingress;
 
 pub async fn start(cfg: config::Config) -> Result<()> {
-    let cf_api = cloudflare::api::Client::new(
-        cfg.cloudflare.get_account_id(),
-        Auth::ApiToken(cfg.cloudflare.get_api_token()),
-    );
+    let mut handle = Handle::new();
 
-    let token = cf_api
-        .get_tunnel_token(cfg.cloudflare.get_tunnel_id().as_str())
-        .await?;
+    let ingress = ingress::IngressController::new();
 
-    let tkn = TunnelAuth::new(token.as_str())?;
+    let mut future = {
+        let ctx = handle.spawn();
+        let cfg = cfg.clone();
 
-    let (context, handle) = SuperContext::new(None);
-
-    let supervisor = Supervisor::new(&EdgeRegionLocation::AUTO, tkn).await?;
-
-    info!("Starting supervisor");
-
-    let supervisor_handle = tokio::spawn(async move { supervisor.start(context).await });
+        tokio::spawn(async move { ingress.run(ctx, cfg).await })
+    };
 
     select! {
-        r = supervisor_handle => {
-            info!("Supervisor exited");
-            r??; // this is a double question mark, it unwraps the result from the promise and then unwraps the result from the return.
+        r = &mut future => {
+            r??;
+
+            return Err(anyhow!("Ingress controller exited unexpectedly"));
         }
         r = tokio::signal::ctrl_c() => {
             if let Err(err) = r {
@@ -47,9 +38,9 @@ pub async fn start(cfg: config::Config) -> Result<()> {
     }
 
     let shutdown = async {
-        if let Some(timeout) = cfg.get_shutdown_timeout() {
+        if let Some(timeout) = cfg.shutdown_timeout {
             time::timeout(Duration::from_secs(timeout), async {
-                let _ = handle.cancel().await;
+                handle.cancel().await;
             })
             .await
             .context(format!(
@@ -57,13 +48,11 @@ pub async fn start(cfg: config::Config) -> Result<()> {
                 timeout,
             ))?;
         } else {
-            let _ = handle.cancel().await;
+            handle.cancel().await;
         }
 
         Ok::<(), anyhow::Error>(())
     };
-
-    info!("waiting for supervisor to stop");
 
     select! {
         r = shutdown => r?,
@@ -73,7 +62,7 @@ pub async fn start(cfg: config::Config) -> Result<()> {
         }
     }
 
-    info!("supervisor stopped");
+    info!("controller stopped");
 
     Ok(())
 }

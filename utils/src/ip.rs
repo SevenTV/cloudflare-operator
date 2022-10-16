@@ -11,10 +11,10 @@ pub async fn support_ipv6() -> bool {
 
         if let Ok(records) = records {
             let records = records.iter().collect::<Vec<_>>();
-            if records.len() > 0 {
+            if !records.is_empty() {
                 let conn = tokio::net::TcpSocket::new_v6();
                 if let Ok(conn) = conn {
-                    if let Ok(_) = conn
+                    return conn
                         .connect(std::net::SocketAddr::V6(std::net::SocketAddrV6::new(
                             records[0].to_owned(),
                             80,
@@ -22,9 +22,7 @@ pub async fn support_ipv6() -> bool {
                             0,
                         )))
                         .await
-                    {
-                        return true;
-                    }
+                        .is_ok();
                 }
             }
         }
@@ -42,18 +40,16 @@ pub async fn support_ipv4() -> bool {
 
         if let Ok(records) = records {
             let records = records.iter().collect::<Vec<_>>();
-            if records.len() > 0 {
+            if !records.is_empty() {
                 let conn = tokio::net::TcpSocket::new_v4();
                 if let Ok(conn) = conn {
-                    if let Ok(_) = conn
+                    return conn
                         .connect(std::net::SocketAddr::V4(std::net::SocketAddrV4::new(
                             records[0].to_owned(),
                             80,
                         )))
                         .await
-                    {
-                        return true;
-                    }
+                        .is_ok();
                 }
             }
         }

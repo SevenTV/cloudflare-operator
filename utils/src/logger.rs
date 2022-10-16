@@ -1,32 +1,42 @@
-use log::LevelFilter;
-use log4rs::append::console::ConsoleAppender;
-use log4rs::config::{Appender, Root};
-use log4rs::encode::json::JsonEncoder;
-use log4rs::{Config, Handle};
+use tracing::Level;
+use tracing_subscriber::{
+    filter, fmt,
+    prelude::*,
+    reload::{self, Handle},
+    Registry,
+};
 
-fn make_config(lvl: LevelFilter) -> Config {
-    let json_stdout = ConsoleAppender::builder()
-        .encoder(Box::new(JsonEncoder::new()))
-        .build();
-
-    Config::builder()
-        .appender(Appender::builder().build("stdout", Box::new(json_stdout)))
-        .build(Root::builder().appender("stdout").build(lvl))
-        .unwrap()
-}
-
+#[derive(Debug, Clone)]
 pub struct Logger {
-    handle: Handle,
+    handle: Handle<filter::LevelFilter, Registry>,
 }
 
-pub fn init() -> Logger {
+pub fn init(lvl: Level) -> Logger {
+    let (filtered_layer, reload_handle) = reload::Layer::new(lvl.into());
+
+    tracing_subscriber::registry()
+        .with(filtered_layer)
+        .with(
+            fmt::Layer::default()
+                .json()
+                .flatten_event(true)
+                .with_line_number(true)
+                .with_file(true)
+                .with_thread_ids(true)
+                .with_target(true)
+                .with_span_list(true)
+                .with_current_span(false)
+                .with_span_events(fmt::format::FmtSpan::NEW | fmt::format::FmtSpan::CLOSE),
+        )
+        .init();
+
     Logger {
-        handle: log4rs::init_config(make_config(LevelFilter::Info)).unwrap(),
+        handle: reload_handle,
     }
 }
 
 impl Logger {
-    pub fn set_level(&self, lvl: LevelFilter) {
-        self.handle.set_config(make_config(lvl));
+    pub fn set_level(&self, lvl: Level) {
+        self.handle.reload(Some(lvl)).unwrap();
     }
 }

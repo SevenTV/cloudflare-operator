@@ -8,7 +8,7 @@ pub fn generated_mod(input: TokenStream) -> TokenStream {
 
     let vis = vec[0].to_string();
     let name = vec[1].to_string();
-    let file = vec[2].replace("\"", "");
+    let file = vec[2].replace('"', "");
 
     // get out dir
     let out_dir = std::env::var("OUT_DIR").unwrap();

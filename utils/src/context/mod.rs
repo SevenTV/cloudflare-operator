@@ -204,13 +204,13 @@ impl Handle {
     pub fn spawn_ctx(&mut self) -> Context {
         if let Some(ref ctx) = self.parent_ctx {
             Context {
-                timeout: self.timeout.clone(),
+                timeout: self.timeout,
                 cancel_receiver: self.cancel_sender.subscribe(),
                 parent_ctx: Some(ctx.clone()),
             }
         } else {
             Context {
-                timeout: self.timeout.clone(),
+                timeout: self.timeout,
                 cancel_receiver: self.cancel_sender.subscribe(),
                 parent_ctx: None,
             }
@@ -258,11 +258,7 @@ impl Context {
     /// Note that using this version means that the context chain will end here. If you want to
     /// allow continuing the context chain, use [`RefContext::with_parent`].
     pub fn with_parent(parent_ctx: &RefContext, timeout: Option<Duration>) -> (Context, Handle) {
-        let timeout = if let Some(t) = timeout {
-            Some(Instant::now() + t)
-        } else {
-            None
-        };
+        let timeout = timeout.map(|t| Instant::now() + t);
         let (tx, _) = broadcast::channel(1);
         let mut handle = Handle {
             timeout,
@@ -281,8 +277,8 @@ impl Context {
                 // Non-chained cases.
                 (Some(instant), None) => {
                     tokio::select! {
-                        _ = tokio::time::sleep_until(instant) => return,
-                        _ = self.cancel_receiver.recv() => return,
+                        _ = tokio::time::sleep_until(instant) => (),
+                        _ = self.cancel_receiver.recv() => (),
                     }
                 }
                 (None, None) => {
@@ -295,9 +291,9 @@ impl Context {
                     let mut inner = parent_ctx.0.lock().await;
 
                     tokio::select! {
-                        _ = tokio::time::sleep_until(instant) => return,
-                        _ = self.cancel_receiver.recv() => return,
-                        _ = inner.done() => return,
+                        _ = tokio::time::sleep_until(instant) => (),
+                        _ = self.cancel_receiver.recv() => (),
+                        _ = inner.done() => (),
                     }
                 }
                 (None, Some(ctx)) => {
@@ -305,8 +301,8 @@ impl Context {
                     let mut inner = parent_ctx.0.lock().await;
 
                     tokio::select! {
-                        _ = self.cancel_receiver.recv() => return,
-                        _ = inner.done() => return,
+                        _ = self.cancel_receiver.recv() => (),
+                        _ = inner.done() => (),
                     }
                 }
             }

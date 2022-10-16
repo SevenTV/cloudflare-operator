@@ -5,12 +5,10 @@ mod config;
 mod helpers;
 mod setup;
 
-use log::{error, info};
+use tracing::{error, info};
 
 #[tokio::main]
 async fn main() {
-    // console_subscriber::init();
-
     let config = match setup::setup() {
         Ok(config) => config,
         Err(err) => {

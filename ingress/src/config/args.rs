@@ -1,7 +1,7 @@
 use anyhow::Result;
 use clap::{Arg, ArgAction, Command};
 
-use super::{Config, ConfigCloudflare, ConfigKubernetes};
+use super::cfg::{Config, ConfigKubernetes};
 
 macro_rules! bool_optional {
     ($count:expr) => {
@@ -19,10 +19,9 @@ pub fn parse() -> Result<Config> {
         .author("Troy Benson <troy@7tv.app>")
         .about("Manages Cloudflare tunnels for Kubernetes Ingress")
         .arg(
-            Arg::new("debug")
-                .long("debug")
-                .help("Debug mode")
-                .action(ArgAction::SetTrue),
+            Arg::new("log_level")
+                .long("log-level")
+                .help("Logging level"),
         )
         .arg(
             Arg::new("kubernetes.kubeconfig")
@@ -56,21 +55,6 @@ pub fn parse() -> Result<Config> {
                 .action(ArgAction::SetTrue),
         )
         .arg(
-            Arg::new("cloudflare.account_id")
-                .long("cf.account-id")
-                .help("Cloudflare account ID"),
-        )
-        .arg(
-            Arg::new("cloudflare.tunnel_id")
-                .long("cf.tunnel-id")
-                .help("Cloudflare tunnel ID"),
-        )
-        .arg(
-            Arg::new("cloudflare.api_token")
-                .long("cf.api-token")
-                .help("Cloudflare API token"),
-        )
-        .arg(
             Arg::new("config_file")
                 .long("config")
                 .help("Config file path"),
@@ -83,10 +67,11 @@ pub fn parse() -> Result<Config> {
         .get_matches();
 
     Ok(Config {
-        debug: bool_optional!(matches
-            .get_one::<bool>("debug")
-            .unwrap_or(&false)
-            .to_owned()),
+        log_level: matches.get_one::<String>("log_level").cloned(),
+        mode: None,
+        rules: None,
+        auth: None,
+        cloudflare_tunnels: None,
         shutdown_timeout: matches.get_one::<u64>("shutdown_timeout").cloned(),
         kubernetes: ConfigKubernetes {
             kubeconfig: matches.get_one::<String>("kubernetes.kubeconfig").cloned(),
@@ -100,11 +85,6 @@ pub fn parse() -> Result<Config> {
                 .get_one::<bool>("kubernetes.watch_ingresses_without_class")
                 .unwrap_or(&false)
                 .to_owned()),
-        },
-        cloudflare: ConfigCloudflare {
-            account_id: matches.get_one::<String>("cloudflare.account_id").cloned(),
-            tunnel_id: matches.get_one::<String>("cloudflare.tunnel_id").cloned(),
-            api_token: matches.get_one::<String>("cloudflare.api_token").cloned(),
         },
         config_file: matches.get_one::<String>("config_file").cloned(),
     })

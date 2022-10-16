@@ -3,15 +3,9 @@ name = "framework"
 version = "0.1.0"
 edition = "2021"
 
-build = "build.rs"
-
-[build-dependencies]
-capnpc = "0.14.9"
-anyhow = "1.0.65"
-
 [dependencies]
-procmacros = { path = "../procmacros" }
 utils = { path = "../utils" }
+generated = { path = "../generated" }
 
 anyhow = "1.0.65"
 base64 = "0.13.0"
@@ -20,7 +14,7 @@ capnp-rpc = "0.14.1"
 chrono = { version = "0.4.22", features = ["serde"] }
 futures = "0.3.24"
 log = "0.4.17"
-reqwest = { version = "0.11.12", features = ["json", "brotli"] }
+reqwest = { version = "0.11.12", features = ["json", "brotli", "rustls-tls" ], default-features = false }
 serde = { version = "1.0.145", features = ["derive", "serde_derive"] }
 serde_json = "1.0.85"
 tokio = { version = "1.21.2", features = ["full"] }
@@ -32,9 +26,9 @@ rustls-pemfile = "1.0.1"
 trust-dns-resolver = "0.22.0"
 quinn = "0.8.5"
 async-trait = "0.1.57"
-send_wrapper = { version = "0.6.0", features = ["futures"] }
 tokio-util = { version = "0.7.4", features = ["full"] }
 bytes = "1.2.1"
-num_enum = "0.5.7"
 tuple-conv = "1.0.1"
 capnp-futures = "0.14.2"
+rand = "0.8.5"
+tracing = "0.1.37"

@@ -5,4 +5,5 @@ members = [
     "framework",
     "utils",
     "procmacros",
+    "generated",
 ]

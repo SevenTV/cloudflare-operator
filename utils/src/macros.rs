@@ -14,25 +14,6 @@ macro_rules! trait_alias {
 }
 
 #[macro_export]
-macro_rules! handle_errors {
-    ($tuple:ident) => {{
-        use tuple_conv::RepeatedTuple;
-
-        let handles = $tuple.to_vec();
-        let errors = handles
-            .iter()
-            .filter(|h| h.is_err())
-            .map(|h| h.as_ref().unwrap_err())
-            .collect::<Vec<_>>();
-        if !errors.is_empty() {
-            Err(anyhow!("Errors: {:?}", errors))
-        } else {
-            Ok(())
-        }
-    }};
-}
-
-#[macro_export]
 macro_rules! vec_type_to_primitive {
     ($vec:ident, $builder:ident) => {{
         let mut builder = $builder;
