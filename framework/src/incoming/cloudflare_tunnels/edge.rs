@@ -27,6 +27,7 @@ impl IpPortHost {
     }
 }
 
+#[derive(Clone)]
 pub struct EdgeTracker {
     mp: Arc<Mutex<HashMap<u32, IpPortHost>>>,
     pool: Arc<Mutex<Vec<IpPortHost>>>,

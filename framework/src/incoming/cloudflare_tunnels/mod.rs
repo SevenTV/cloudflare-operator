@@ -63,21 +63,21 @@ impl Supervisor {
         })
     }
 
-    pub async fn start(mut self, ctx: Context) -> Result<()> {
+    pub async fn start(self, ctx: Context) -> Result<()> {
         let tls = self.tls.lock().await.get(&Protocol::Quic).unwrap().clone(); // todo
 
         let mut handles = Vec::new();
 
         for i in 0..4 {
-            let ip = self.tracker.get(&i).await?;
             let ctx = ctx.clone();
             let auth = self.auth.clone();
             let tls = tls.clone();
             let id = self.id;
             let handle = self.handle.clone();
+            let tracker = self.tracker.clone();
 
             handles.push(tokio::spawn(async move {
-                Self::start_helper(ctx, Protocol::Quic, id, i, ip, tls, auth, handle).await
+                Self::start_helper(ctx, tracker, Protocol::Quic, id, i, tls, auth, handle).await
                 // todo handle errors here to get new IP ect...
             }));
         }
@@ -98,15 +98,19 @@ impl Supervisor {
 
     async fn start_helper(
         ctx: Context,
+        tracker: EdgeTracker,
         protocol: Protocol,
         id: Uuid,
         idx: u32,
-        ip: IpPortHost,
         tls: tls::RootCert,
         auth: TunnelAuth,
         handle: types::HandleHttp,
     ) -> Result<()> {
         let mut ctx = ctx;
+        let mut tracker = tracker;
+
+        let ip = tracker.get(&idx).await?;
+
         loop {
             select! {
                 _ = ctx.done() => {
@@ -128,6 +132,8 @@ impl Supervisor {
                 }
             }
         }
+
+        tracker.release(&idx).await;
 
         Ok(())
     }

@@ -9,8 +9,6 @@ use self::clients::{RegistrationServerClient, TunnelServerClient};
 pub mod clients;
 pub mod types;
 
-mod logged;
-
 pub(crate) struct ControlStreamManager {
     tunnel_server: TunnelServerClient,
 }
@@ -36,14 +34,10 @@ impl ControlStreamManager {
 }
 
 pub(crate) fn new_network(send: SendStream, recv: RecvStream) -> Box<dyn VatNetwork<VatId>> {
-    log_network(Box::new(twoparty::VatNetwork::new(
+    Box::new(twoparty::VatNetwork::new(
         recv,
         send,
         VatId::Client,
         Default::default(),
-    )))
-}
-
-pub(crate) fn log_network(network: Box<dyn VatNetwork<VatId>>) -> Box<dyn VatNetwork<VatId>> {
-    logged::LoggedVatNetwork::new(network).boxed()
+    ))
 }

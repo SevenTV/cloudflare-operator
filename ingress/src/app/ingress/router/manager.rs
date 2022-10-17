@@ -1,6 +1,7 @@
 use std::{collections::HashMap, sync::Arc};
 
 use anyhow::Result;
+use anyhow::anyhow;
 use async_trait::async_trait;
 use framework::api;
 use framework::incoming::cloudflare_tunnels::types::EdgeRegionLocation;
@@ -33,8 +34,6 @@ struct RunningTunnel {
 
     auth: TunnelAuth,
 }
-
-struct RunningTunnelHandle(Arc<RwLock<Arc<Rules>>>);
 
 impl RunningTunnel {
     pub fn new(inst_id: Uuid, auth: TunnelAuth) -> Self {
@@ -96,6 +95,8 @@ impl RunningTunnel {
     }
 }
 
+struct RunningTunnelHandle(Arc<RwLock<Arc<Rules>>>);
+
 #[async_trait]
 impl HandleHttpTrait for RunningTunnelHandle {
     async fn handle(
@@ -107,8 +108,8 @@ impl HandleHttpTrait for RunningTunnelHandle {
         let mut ctx = ctx;
 
         select! {
-            // allows for super fast shutdown
-            _ = ctx.done() => { Ok(()) },
+            // allows for super fast shutdown, as returning from this function will close the stream
+            _ = ctx.done() => { Err(anyhow!("context canceled")) },
             r = async {
                 let _rules = self.0.read().await.clone();
 
