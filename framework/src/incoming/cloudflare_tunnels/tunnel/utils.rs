@@ -15,8 +15,8 @@ use tokio_util::task::LocalPoolHandle;
 use uuid::Uuid;
 
 use crate::incoming::{
-    cloudflare_tunnels::types::{self, HandleHttp, TunnelAuth},
-    types::HttpMethod,
+    cloudflare_tunnels::types::TunnelAuth,
+    types::{HandleHttp, HttpMethod, HttpRequest, HttpResponse, HttpStream},
 };
 
 use super::super::rpc::{new_network, ControlStreamManager};
@@ -192,10 +192,11 @@ pub async fn serve_stream(ctx: Context, stream: (SendStream, RecvStream), handle
                 // https://example.com/abc
                 // "https:" "" "example.com" "abc"
                 let path = request.dest.splitn(4, '/').nth(3).unwrap();
-                let mut req = types::HttpRequest {
+                let mut req = HttpRequest {
                     method: HttpMethod::GET,
                     path: format!("/{}", path),
                     headers: Vec::new(),
+                    hostname: "".to_string(),
                     is_websocket: request.connection_type == primitives::ConnectionType::Websocket,
                 };
 
@@ -206,7 +207,8 @@ pub async fn serve_stream(ctx: Context, stream: (SendStream, RecvStream), handle
 
                         req.headers.push((key.to_string(), value));
                     } else if metadata.key == "HttpHost" {
-                        req.headers.push(("Host".to_string(), metadata.val));
+                        req.headers.push(("Host".to_string(), metadata.val.clone()));
+                        req.hostname = metadata.val;
                     } else if metadata.key == "HttpMethod" {
                         req.method = match metadata.val.as_str() {
                             "GET" => HttpMethod::GET,
@@ -227,7 +229,7 @@ pub async fn serve_stream(ctx: Context, stream: (SendStream, RecvStream), handle
                     .handle(
                         ctx,
                         req,
-                        Box::new(HttpStream {
+                        Box::new(HttpStreamImpl {
                             send,
                             recv,
                             version: buf,
@@ -246,17 +248,17 @@ pub async fn serve_stream(ctx: Context, stream: (SendStream, RecvStream), handle
     }
 }
 
-struct HttpStream {
+struct HttpStreamImpl {
     send: SendStream,
     recv: RecvStream,
     version: [u8; 2],
 }
 
 #[async_trait]
-impl types::HttpStream for HttpStream {
+impl HttpStream for HttpStreamImpl {
     async fn decompose<'a>(
         &mut self,
-        resp: Result<types::HttpResponse>,
+        resp: Result<HttpResponse>,
     ) -> Result<(
         &mut (dyn AsyncRead + Send + Sync + Unpin),
         &mut (dyn AsyncWrite + Send + Sync + Unpin),

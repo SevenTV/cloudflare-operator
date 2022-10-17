@@ -1,6 +1,6 @@
 pub mod args;
-pub mod cfg;
 pub mod env;
 pub mod file;
+pub mod types;
 
-pub use cfg::Config;
+pub use types::Config;

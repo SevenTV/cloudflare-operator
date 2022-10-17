@@ -137,10 +137,6 @@ pub(super) async fn get_proto_edge_tls_map() -> Result<HashMap<Protocol, RootCer
         Protocol::Quic,
         create_tunnel_tls_config(Protocol::Quic.tls_settings()).await?,
     );
-    map.insert(
-        Protocol::HTTP2,
-        create_tunnel_tls_config(Protocol::HTTP2.tls_settings()).await?,
-    );
 
     Ok(map)
 }

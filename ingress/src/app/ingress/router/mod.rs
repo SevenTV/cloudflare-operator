@@ -1,12 +1,15 @@
-use std::{collections::HashMap, time::Duration};
+use std::time::Duration;
 
 use anyhow::{anyhow, Result};
 use tokio::{select, sync::mpsc::Receiver};
 use tracing::{error, info};
 use utils::context::wait::Context;
-use uuid::Uuid;
 
-use crate::config::{cfg, cfg::rules::IngressRule::CloudflareTunnel, Config};
+use crate::config::types as config;
+
+use crate::config::Config;
+
+use types::*;
 
 mod manager;
 mod types;
@@ -14,12 +17,6 @@ mod types;
 pub struct RouteController {
     cfg: Config,
     rebuild_notify: Receiver<()>,
-}
-
-#[derive(Debug, Clone, Default)]
-struct RebuildConfig {
-    auth_map: HashMap<(String, types::auth::Type), types::auth::Auth>,
-    cloudflare_tunnels: HashMap<Uuid, types::CloudflareTunnel>,
 }
 
 impl RouteController {
@@ -34,28 +31,16 @@ impl RouteController {
         crate::config::file::parse(path).ok().unwrap_or(None)
     }
 
-    fn rebuild_auth_from_config(cfg: &Config, rebuild: &mut RebuildConfig) {
+    fn rebuild_auth_from_config(cfg: &Config, rebuild: &mut manager::RebuildConfig) {
         if let Some(auth) = &cfg.auth {
             for auth in auth.iter() {
                 let (t, a) = match &auth.auth {
-                    cfg::auth::Auth::Cloudflare(a) => (
+                    config::auth::Auth::Cloudflare(a) => (
                         (
                             auth.name.clone().unwrap_or_else(|| "default".to_string()),
                             types::auth::Type::Cloudflare,
                         ),
-                        types::auth::Auth::Cloudflare(match a {
-                            cfg::auth::AuthCloudflare::ApiToken { api_token } => {
-                                types::auth::Cloudflare::ApiToken {
-                                    token: api_token.clone(),
-                                }
-                            }
-                            cfg::auth::AuthCloudflare::ApiKey { api_key, email } => {
-                                types::auth::Cloudflare::ApiKey {
-                                    key: api_key.clone(),
-                                    email: email.clone(),
-                                }
-                            }
-                        }),
+                        types::auth::Auth::Cloudflare(a.clone().into()),
                     ),
                 };
                 let name = t.0.clone();
@@ -68,7 +53,7 @@ impl RouteController {
         }
     }
 
-    fn rebuild_cloudflare_tunnels_from_config(cfg: &Config, rebuild: &mut RebuildConfig) {
+    fn rebuild_cloudflare_tunnels_from_config(cfg: &Config, rebuild: &mut manager::RebuildConfig) {
         if let Some(tunnels) = &cfg.cloudflare_tunnels {
             for tunnel in tunnels {
                 let auth = rebuild.auth_map.get(&(
@@ -76,35 +61,34 @@ impl RouteController {
                     types::auth::Type::Cloudflare,
                 ));
                 if let Some(auth) = auth {
-                    if let types::auth::Auth::Cloudflare(auth) = auth {
-                        rebuild.cloudflare_tunnels.insert(
-                            tunnel.tunnel_id,
-                            types::CloudflareTunnel {
-                                account_id: tunnel.account_id.clone(),
-                                id: tunnel.tunnel_id,
-                                auth: auth.clone(),
-                                ingress: vec![],
-                            },
-                        );
-                    } else {
-                        panic!("auth type mismatch");
-                    }
+                    match auth {
+                        types::auth::Auth::Cloudflare(auth) => {
+                            rebuild.cloudflare_tunnels.insert(
+                                tunnel.tunnel_id,
+                                ingress::cloudflare_tunnels::Ingress {
+                                    account_id: tunnel.account_id.clone(),
+                                    tunnel_id: tunnel.tunnel_id,
+                                    auth: auth.clone(),
+                                    ingress: vec![],
+                                },
+                            );
+                        }
+                    };
                 }
             }
         }
     }
 
-    fn rebuild_ingress_from_config(cfg: &Config, rebuild: &mut RebuildConfig) {
+    fn rebuild_ingress_from_config(cfg: &Config, rebuild: &mut manager::RebuildConfig) {
         if let Some(rules) = &cfg.rules {
             for rule in rules {
                 let add_result = || -> Result<()> {
                     match rule {
-                        CloudflareTunnel(rule) => {
+                        config::ingress::IngressRule::CloudflareTunnel(rule) => {
                             if let Some(entry) =
                                 rebuild.cloudflare_tunnels.get_mut(&rule.rule.tunnel_id)
                             {
-                                let tunnel = types::http::cloudflare_tunnel_ingress_from_cfg(rule)?;
-                                entry.ingress.push(tunnel);
+                                entry.ingress.push(rule.clone().into());
                                 return Ok(());
                             }
 
@@ -166,7 +150,7 @@ impl RouteController {
                                 }
                             };
 
-                            let mut rebuild = RebuildConfig::default();
+                            let mut rebuild = manager::RebuildConfig::default();
 
                             // first we must get all the auths
                             Self::rebuild_auth_from_config(&cfg, &mut rebuild);

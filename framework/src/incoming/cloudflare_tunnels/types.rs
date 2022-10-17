@@ -1,13 +1,8 @@
-use std::{net::IpAddr, sync::Arc};
+use std::net::IpAddr;
 
 use anyhow::Result;
-use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
-use tokio::io::{AsyncRead, AsyncWrite};
-use utils::context::wait::Context;
 use uuid::Uuid;
-
-use crate::incoming::types::HttpMethod;
 
 #[derive(Debug, Clone)]
 pub(super) struct EdgeRegion {
@@ -22,10 +17,7 @@ pub enum EdgeRegionLocation {
 
 #[derive(Debug, PartialEq, Eq, Hash, Clone)]
 pub(super) enum Protocol {
-    #[allow(dead_code)]
-    None,
     Quic,
-    HTTP2,
 }
 
 pub(super) struct TLSSettings {
@@ -34,63 +26,14 @@ pub(super) struct TLSSettings {
 }
 
 impl Protocol {
-    pub(super) fn fallback(&self) -> Self {
-        match self {
-            Protocol::Quic => Protocol::HTTP2,
-            Protocol::HTTP2 => Protocol::None,
-            Protocol::None => Protocol::None,
-        }
-    }
-
     pub(super) fn tls_settings(&self) -> TLSSettings {
         match self {
             Protocol::Quic => TLSSettings {
                 server_name: "quic.cftunnel.com".to_string(),
                 next_protos: vec!["argotunnel".to_string()],
             },
-            Protocol::HTTP2 => TLSSettings {
-                server_name: "h2.cftunnel.com".to_string(),
-                next_protos: vec![],
-            },
-            Protocol::None => panic!("no tls settings for protocol None"),
         }
     }
-}
-
-pub type HandleHttp = Box<Arc<dyn HandleHttpTrait>>;
-
-#[async_trait]
-pub trait HandleHttpTrait: Send + Sync {
-    async fn handle(
-        &self,
-        ctx: Context,
-        req: HttpRequest,
-        stream: Box<dyn HttpStream>,
-    ) -> Result<()>;
-}
-
-#[derive(Debug, Clone)]
-pub struct HttpRequest {
-    pub method: HttpMethod,
-    pub path: String,
-    pub is_websocket: bool,
-    pub headers: Vec<(String, String)>,
-}
-
-pub struct HttpResponse {
-    pub status: u16,
-    pub headers: Vec<(String, String)>,
-}
-
-#[async_trait]
-pub trait HttpStream: Send + Sync {
-    async fn decompose<'a>(
-        &mut self,
-        resp: Result<HttpResponse>,
-    ) -> Result<(
-        &mut (dyn AsyncRead + Send + Sync + Unpin),
-        &mut (dyn AsyncWrite + Send + Sync + Unpin),
-    )>;
 }
 
 #[derive(Clone, Serialize, Deserialize, Debug, Default)]

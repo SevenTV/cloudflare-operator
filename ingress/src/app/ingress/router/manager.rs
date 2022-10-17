@@ -1,16 +1,16 @@
 use std::{collections::HashMap, sync::Arc};
 
-use anyhow::Result;
 use anyhow::anyhow;
+use anyhow::Result;
 use async_trait::async_trait;
 use framework::api;
-use framework::incoming::cloudflare_tunnels::types::EdgeRegionLocation;
-use framework::incoming::cloudflare_tunnels::types::HandleHttpTrait;
-use framework::incoming::cloudflare_tunnels::types::HttpRequest;
-use framework::incoming::cloudflare_tunnels::types::HttpResponse;
-use framework::incoming::cloudflare_tunnels::types::HttpStream;
-use framework::incoming::cloudflare_tunnels::types::TunnelAuth;
+
+use framework::incoming::cloudflare_tunnels::types as cloudflare_tunnels;
 use framework::incoming::cloudflare_tunnels::Supervisor;
+use framework::incoming::types as incoming;
+
+use crate::app::ingress::router::types::*;
+
 use tokio::io::AsyncWriteExt;
 use tokio::select;
 use tokio::sync::Mutex;
@@ -20,11 +20,13 @@ use utils::context::wait::Context;
 use utils::context::wait::Handle;
 use uuid::Uuid;
 
-use super::RebuildConfig;
+#[derive(Debug, Clone, Default)]
+pub(super) struct RebuildConfig {
+    pub auth_map: HashMap<(String, auth::Type), auth::Auth>,
+    pub cloudflare_tunnels: HashMap<Uuid, ingress::cloudflare_tunnels::Ingress>,
+}
 
-use super::types;
-
-type Rules = Vec<types::http::Container<types::http::cloudflare_tunnel::Ingress>>;
+type Rules = Vec<ingress::cloudflare_tunnels::Container>;
 
 struct RunningTunnel {
     // this is the instance of this running tunnel. Not the tunnel id
@@ -32,11 +34,11 @@ struct RunningTunnel {
     // rules
     rules: Arc<RwLock<Arc<Rules>>>,
 
-    auth: TunnelAuth,
+    auth: cloudflare_tunnels::TunnelAuth,
 }
 
 impl RunningTunnel {
-    pub fn new(inst_id: Uuid, auth: TunnelAuth) -> Self {
+    pub fn new(inst_id: Uuid, auth: cloudflare_tunnels::TunnelAuth) -> Self {
         Self {
             inst_id,
             auth,
@@ -63,7 +65,7 @@ impl RunningTunnel {
                     _ = async{} => {
                         info!("starting tunnel");
                         let result = async {
-                            let supervisor = Supervisor::new(id, &EdgeRegionLocation::AUTO, auth.clone(), Box::new(Arc::new(RunningTunnelHandle(rules.clone())))).await?;
+                            let supervisor = Supervisor::new(id, &cloudflare_tunnels::EdgeRegionLocation::AUTO, auth.clone(), Box::new(Arc::new(RunningTunnelHandle(rules.clone())))).await?;
                             supervisor.start(ctx.clone()).await
                         }.await;
 
@@ -98,12 +100,12 @@ impl RunningTunnel {
 struct RunningTunnelHandle(Arc<RwLock<Arc<Rules>>>);
 
 #[async_trait]
-impl HandleHttpTrait for RunningTunnelHandle {
+impl incoming::HandleHttpTrait for RunningTunnelHandle {
     async fn handle(
         &self,
         ctx: Context,
-        req: HttpRequest,
-        stream: Box<dyn HttpStream>,
+        req: incoming::HttpRequest,
+        stream: Box<dyn incoming::HttpStream>,
     ) -> Result<()> {
         let mut ctx = ctx;
 
@@ -113,7 +115,7 @@ impl HandleHttpTrait for RunningTunnelHandle {
             r = async {
                 let _rules = self.0.read().await.clone();
 
-                let response = HttpResponse {
+                let response = incoming::HttpResponse {
                     headers: vec![("x-based".to_string(), "waytoobased".to_string())],
                     status: 200,
                 };
@@ -172,22 +174,23 @@ impl Manager {
                 let api = api::cloudflare::Client::new(
                     tunnel.account_id,
                     match tunnel.auth {
-                        types::auth::Cloudflare::ApiToken { token } => {
+                        auth::cloudflare::Auth::ApiToken { api_token: token } => {
                             api::cloudflare::Auth::ApiToken(token)
                         }
-                        types::auth::Cloudflare::ApiKey { key, email } => {
-                            api::cloudflare::Auth::ApiKey { key, email }
-                        }
+                        auth::cloudflare::Auth::ApiKey {
+                            api_key: key,
+                            email,
+                        } => api::cloudflare::Auth::ApiKey { key, email },
                     },
                 );
 
-                let result = api.get_tunnel_token(&tunnel.id.to_string()).await;
+                let result = api.get_tunnel_token(&tunnel.tunnel_id.to_string()).await;
                 if let Err(e) = result {
                     error!("Error while getting tunnel token: {}", e);
                     continue;
                 }
 
-                let auth = TunnelAuth::new(&result.unwrap());
+                let auth = cloudflare_tunnels::TunnelAuth::new(&result.unwrap());
                 if let Err(e) = auth {
                     error!("Error while creating tunnel auth: {}", e);
                     continue;

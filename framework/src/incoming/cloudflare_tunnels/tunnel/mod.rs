@@ -9,7 +9,9 @@ use tokio::{join, select};
 use tuple_conv::RepeatedTuple;
 use uuid::Uuid;
 
-use super::types::{HandleHttp, Protocol, TunnelAuth};
+use crate::incoming::types::HandleHttp;
+
+use super::types::{Protocol, TunnelAuth};
 
 use super::{edge::IpPortHost, tls::RootCert};
 
@@ -44,8 +46,6 @@ impl EdgeTunnelClient {
 
         let resp = match protocol {
             Protocol::Quic => Ok(self.serve_quic(ctx.clone(), addr, tls_config).await?),
-            Protocol::HTTP2 => Ok(self.serve_http2(ctx.clone(), addr, tls_config).await?),
-            _ => Err(anyhow!("Protocol not supported")),
         };
 
         info!("Tunnel client {} is shutting down", id);
@@ -122,14 +122,5 @@ impl EdgeTunnelClient {
             .map_err(|e| anyhow!("serve quic failed: {:?}", e))?;
 
         Ok(())
-    }
-
-    pub async fn serve_http2(
-        self,
-        _ctx: Context,
-        _addr: IpPortHost,
-        _tls_config: RootCert,
-    ) -> Result<()> {
-        panic!("not implemented")
     }
 }

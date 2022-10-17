@@ -7,7 +7,6 @@ use quinn::{RecvStream, SendStream};
 use self::clients::{RegistrationServerClient, TunnelServerClient};
 
 pub mod clients;
-pub mod types;
 
 pub(crate) struct ControlStreamManager {
     tunnel_server: TunnelServerClient,

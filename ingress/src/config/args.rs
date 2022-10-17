@@ -1,7 +1,7 @@
 use anyhow::Result;
 use clap::{Arg, ArgAction, Command};
 
-use super::cfg::{Config, ConfigKubernetes};
+use super::types::{k8s::ConfigKubernetes, Config};
 
 macro_rules! bool_optional {
     ($count:expr) => {
@@ -22,6 +22,12 @@ pub fn parse() -> Result<Config> {
             Arg::new("log_level")
                 .long("log-level")
                 .help("Logging level"),
+        )
+        .arg(
+            Arg::new("kubernetes.enabled")
+                .long("kubernetes.enabled")
+                .help("Enable Kubernetes integration")
+                .action(ArgAction::SetTrue),
         )
         .arg(
             Arg::new("kubernetes.kubeconfig")
@@ -68,12 +74,15 @@ pub fn parse() -> Result<Config> {
 
     Ok(Config {
         log_level: matches.get_one::<String>("log_level").cloned(),
-        mode: None,
         rules: None,
         auth: None,
         cloudflare_tunnels: None,
         shutdown_timeout: matches.get_one::<u64>("shutdown_timeout").cloned(),
         kubernetes: ConfigKubernetes {
+            enabled: bool_optional!(matches
+                .get_one::<bool>("kubernetes.enabled")
+                .unwrap_or(&false)
+                .to_owned()),
             kubeconfig: matches.get_one::<String>("kubernetes.kubeconfig").cloned(),
             namespace: matches.get_one::<String>("kubernetes.namespace").cloned(),
             pod_name: matches.get_one::<String>("kubernetes.pod_name").cloned(),

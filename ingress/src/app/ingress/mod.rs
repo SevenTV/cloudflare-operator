@@ -75,8 +75,7 @@ impl IngressController {
             let tx = rebuild_ingress_sender.clone();
 
             tokio::spawn(utils::detect_finish(drop_sender.clone(), async move {
-                let mode = cfg.mode.clone();
-                if mode.is_some() && mode.unwrap() == crate::config::cfg::Mode::K8S {
+                if cfg.kubernetes.enabled.unwrap_or_default() {
                     IngressController::watch_k8s(ctx, tx, cfg).await?;
                 } else {
                     ctx.done().await;
