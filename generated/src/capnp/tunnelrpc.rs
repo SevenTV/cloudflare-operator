@@ -61,7 +61,7 @@ pub mod structs {
     use super::primitives;
     use anyhow::Result;
 
-    #[derive(Debug)]
+    #[derive(Clone, Debug, PartialEq, Eq)]
     pub struct Authentication {
         pub key: String,
         pub email: String,
@@ -76,9 +76,7 @@ pub mod structs {
             builder.set_email(&self.email);
             builder.set_origin_c_a_key(&self.origin_c_a_key);
         }
-    }
 
-    impl Authentication {
         pub fn from_primitive(primitive: primitives::Authentication::Reader) -> Result<Self> {
             Ok(Self {
                 key: primitive.get_key()?.to_string(),
@@ -88,7 +86,7 @@ pub mod structs {
         }
     }
 
-    #[derive(Debug)]
+    #[derive(Clone, Debug, PartialEq, Eq)]
     pub struct TunnelRegistration {
         pub err: String,
         pub url: String,
@@ -120,9 +118,7 @@ pub mod structs {
             builder.set_event_digest(&self.event_digest);
             builder.set_conn_digest(&self.conn_digest);
         }
-    }
 
-    impl TunnelRegistration {
         pub fn from_primitive(primitive: primitives::TunnelRegistration::Reader) -> Result<Self> {
             Ok(Self {
                 err: primitive.get_err()?.to_string(),
@@ -137,7 +133,7 @@ pub mod structs {
         }
     }
 
-    #[derive(Debug)]
+    #[derive(Clone, Debug, PartialEq, Eq)]
     pub struct RegistrationOptions {
         pub client_id: String,
         pub version: String,
@@ -184,9 +180,7 @@ pub mod structs {
                 builder.reborrow().init_features(self.features.len() as u32),
             );
         }
-    }
 
-    impl RegistrationOptions {
         pub fn from_primitive(primitive: primitives::RegistrationOptions::Reader) -> Result<Self> {
             let t = primitive.get_tags()?;
             let tags = utils::vec_type_from_primitive!(t, Tag);
@@ -210,7 +204,7 @@ pub mod structs {
         }
     }
 
-    #[derive(Debug)]
+    #[derive(Clone, Debug, PartialEq, Eq)]
     pub struct Tag {
         pub name: String,
         pub value: String,
@@ -223,9 +217,7 @@ pub mod structs {
             builder.set_name(&self.name);
             builder.set_value(&self.value);
         }
-    }
 
-    impl Tag {
         pub fn from_primitive(primitive: primitives::Tag::Reader) -> Result<Self> {
             Ok(Self {
                 name: primitive.get_name()?.to_string(),
@@ -234,7 +226,7 @@ pub mod structs {
         }
     }
 
-    #[derive(Debug)]
+    #[derive(Clone, Debug, PartialEq, Eq)]
     pub struct ServerInfo {
         pub location_name: String,
     }
@@ -245,9 +237,7 @@ pub mod structs {
 
             builder.set_location_name(&self.location_name);
         }
-    }
 
-    impl ServerInfo {
         pub fn from_primitive(primitive: primitives::ServerInfo::Reader) -> Result<Self> {
             Ok(Self {
                 location_name: primitive.get_location_name()?.to_string(),
@@ -255,7 +245,7 @@ pub mod structs {
         }
     }
 
-    #[derive(Debug)]
+    #[derive(Clone, Debug, PartialEq, Eq)]
     pub struct AuthenticationResponse {
         pub permanent_err: String,
         pub retryable_err: String,
@@ -272,9 +262,7 @@ pub mod structs {
             builder.set_jwt(&self.jwt);
             builder.set_hours_until_refresh(self.hours_until_refresh);
         }
-    }
 
-    impl AuthenticationResponse {
         pub fn from_primitive(
             primitive: primitives::AuthenticationResponse::Reader,
         ) -> Result<Self> {
@@ -287,7 +275,7 @@ pub mod structs {
         }
     }
 
-    #[derive(Debug)]
+    #[derive(Clone, Debug, PartialEq, Eq)]
     pub struct ClientInfo {
         pub client_id: Vec<u8>,
         pub features: Vec<String>,
@@ -307,9 +295,7 @@ pub mod structs {
             builder.set_version(&self.version);
             builder.set_arch(&self.arch);
         }
-    }
 
-    impl ClientInfo {
         pub fn from_primitive(primitive: primitives::ClientInfo::Reader) -> Result<Self> {
             Ok(Self {
                 client_id: primitive.get_client_id()?.to_vec(),
@@ -320,7 +306,7 @@ pub mod structs {
         }
     }
 
-    #[derive(Debug)]
+    #[derive(Clone, Debug, PartialEq, Eq)]
     pub struct ConnectionOptions {
         pub client: ClientInfo,
         pub origin_local_ip: Vec<u8>,
@@ -339,9 +325,7 @@ pub mod structs {
             builder.set_compression_quality(self.compression_quality);
             builder.set_num_previous_attempts(self.num_previous_attempts);
         }
-    }
 
-    impl ConnectionOptions {
         pub fn from_primitive(primitive: primitives::ConnectionOptions::Reader) -> Result<Self> {
             Ok(Self {
                 client: ClientInfo::from_primitive(primitive.get_client()?)?,
@@ -353,9 +337,9 @@ pub mod structs {
         }
     }
 
-    #[derive(Debug)]
+    #[derive(Clone, Debug, PartialEq, Eq)]
     pub struct ConnectionResponse {
-        result: ConnectionResponseResult,
+        pub result: ConnectionResponseResult,
     }
 
     impl ConnectionResponse {
@@ -373,9 +357,7 @@ pub mod structs {
                 }
             }
         }
-    }
 
-    impl ConnectionResponse {
         pub fn from_primitive(primitive: primitives::ConnectionResponse::Reader) -> Result<Self> {
             Ok(Self {
                 result: {
@@ -396,13 +378,13 @@ pub mod structs {
         }
     }
 
-    #[derive(Debug)]
+    #[derive(Clone, Debug, PartialEq, Eq)]
     pub enum ConnectionResponseResult {
         ConnectionDetails(ConnectionDetails),
         Error(ConnectionError),
     }
 
-    #[derive(Debug)]
+    #[derive(Clone, Debug, PartialEq, Eq)]
     pub struct ConnectionDetails {
         pub uuid: Vec<u8>,
         pub location_name: String,
@@ -417,9 +399,7 @@ pub mod structs {
             builder.set_location_name(&self.location_name);
             builder.set_tunnel_is_remotely_managed(self.tunnel_is_remotely_managed);
         }
-    }
 
-    impl ConnectionDetails {
         pub fn from_primitive(primitive: primitives::ConnectionDetails::Reader) -> Result<Self> {
             Ok(Self {
                 uuid: primitive.get_uuid()?.to_vec(),
@@ -429,7 +409,7 @@ pub mod structs {
         }
     }
 
-    #[derive(Debug)]
+    #[derive(Clone, Debug, PartialEq, Eq)]
     pub struct ConnectionError {
         pub cause: String,
         pub retry_after: i64, // in nanoseconds
@@ -444,9 +424,7 @@ pub mod structs {
             builder.set_retry_after(self.retry_after);
             builder.set_should_retry(self.should_retry);
         }
-    }
 
-    impl ConnectionError {
         pub fn from_primitive(primitive: primitives::ConnectionError::Reader) -> Result<Self> {
             Ok(Self {
                 cause: primitive.get_cause()?.to_string(),
@@ -456,7 +434,7 @@ pub mod structs {
         }
     }
 
-    #[derive(Debug)]
+    #[derive(Clone, Debug, PartialEq, Eq)]
     pub struct TunnelAuth {
         pub account_tag: String,
         pub tunnel_secret: Vec<u8>,
@@ -469,9 +447,7 @@ pub mod structs {
             builder.set_account_tag(&self.account_tag);
             builder.set_tunnel_secret(&self.tunnel_secret);
         }
-    }
 
-    impl TunnelAuth {
         pub fn from_primitive(primitive: primitives::TunnelAuth::Reader) -> Result<Self> {
             Ok(Self {
                 account_tag: primitive.get_account_tag()?.to_string(),
@@ -480,7 +456,7 @@ pub mod structs {
         }
     }
 
-    #[derive(Debug)]
+    #[derive(Clone, Debug, PartialEq, Eq)]
     pub struct RegisterUdpSessionResponse {
         pub err: String,
         pub spans: Vec<u8>,
@@ -493,9 +469,7 @@ pub mod structs {
             builder.set_err(&self.err);
             builder.set_spans(&self.spans);
         }
-    }
 
-    impl RegisterUdpSessionResponse {
         pub fn from_primitive(
             primitive: primitives::RegisterUdpSessionResponse::Reader,
         ) -> Result<Self> {
@@ -506,7 +480,7 @@ pub mod structs {
         }
     }
 
-    #[derive(Debug)]
+    #[derive(Clone, Debug, PartialEq, Eq)]
     pub struct UpdateConfigurationResponse {
         pub latest_applied_version: i32,
         pub err: String,
@@ -519,9 +493,7 @@ pub mod structs {
             builder.set_latest_applied_version(self.latest_applied_version);
             builder.set_err(&self.err);
         }
-    }
 
-    impl UpdateConfigurationResponse {
         pub fn from_primitive(
             primitive: primitives::UpdateConfigurationResponse::Reader,
         ) -> Result<Self> {
@@ -546,6 +518,313 @@ pub mod structs {
         }
         Ok(vec)
     }
+
+    #[cfg(test)]
+    mod tests {
+        use super::*;
+
+        #[test]
+        fn test_authentication() {
+            let auth = Authentication {
+                email: "some@email".to_string(),
+                key: "key123".to_string(),
+                origin_c_a_key: "secret_key".to_string(),
+            };
+            let mut message = capnp::message::Builder::new_default();
+            let mut builder = message.init_root::<super::primitives::Authentication::Builder>();
+            auth.to_primitive(builder);
+            let mut reader = message
+                .get_root_as_reader::<super::primitives::Authentication::Reader>()
+                .unwrap();
+            let auth2 = super::Authentication::from_primitive(reader).unwrap();
+            assert_eq!(auth, auth2);
+        }
+
+        #[test]
+        fn test_tunnel_registration() {
+            let tunnel_registration = TunnelRegistration {
+                conn_digest: "conn_digest".to_string().into_bytes(),
+                err: "err".to_string(),
+                event_digest: "event_digest".to_string().into_bytes(),
+                log_lines: vec!["log_line1".to_string(), "log_line2".to_string()],
+                permanent_failure: true,
+                retry_after_seconds: 123,
+                tunnel_i_d: "tunnel_id".to_string(),
+                url: "url".to_string(),
+            };
+
+            let mut message = capnp::message::Builder::new_default();
+            let mut builder = message.init_root::<super::primitives::TunnelRegistration::Builder>();
+            tunnel_registration.to_primitive(builder);
+            let mut reader = message
+                .get_root_as_reader::<super::primitives::TunnelRegistration::Reader>()
+                .unwrap();
+            let tunnel_registration2 = super::TunnelRegistration::from_primitive(reader).unwrap();
+            assert_eq!(tunnel_registration, tunnel_registration2);
+        }
+
+        #[test]
+        fn test_registration_options() {
+            let registration_options = RegistrationOptions {
+                client_id: "client_id".to_string(),
+                version: "version".to_string(),
+                os: "os".to_string(),
+                existing_tunnel_policy: super::primitives::ExistingTunnelPolicy::Ignore,
+                pool_name: "pool_name".to_string(),
+                tags: vec![Tag {
+                    name: "tag1".to_string(),
+                    value: "value1".to_string(),
+                }],
+                connection_id: 5,
+                origin_local_ip: "origin_local_ip".to_string(),
+                is_autoupdated: true,
+                run_from_terminal: true,
+                compression_quality: 5,
+                uuid: "uuid".to_string(),
+                num_previous_attempts: 5,
+                features: vec!["feature1".to_string(), "feature2".to_string()],
+            };
+
+            let mut message = capnp::message::Builder::new_default();
+            let mut builder =
+                message.init_root::<super::primitives::RegistrationOptions::Builder>();
+            registration_options.to_primitive(builder);
+            let mut reader = message
+                .get_root_as_reader::<super::primitives::RegistrationOptions::Reader>()
+                .unwrap();
+            let registration_options2 = super::RegistrationOptions::from_primitive(reader).unwrap();
+            assert_eq!(registration_options, registration_options2);
+        }
+
+        #[test]
+        fn test_tag() {
+            let tag = Tag {
+                name: "name".to_string(),
+                value: "value".to_string(),
+            };
+
+            let mut message = capnp::message::Builder::new_default();
+            let mut builder = message.init_root::<super::primitives::Tag::Builder>();
+            tag.to_primitive(builder);
+            let mut reader = message
+                .get_root_as_reader::<super::primitives::Tag::Reader>()
+                .unwrap();
+            let tag2 = super::Tag::from_primitive(reader).unwrap();
+            assert_eq!(tag, tag2);
+        }
+
+        #[test]
+        fn test_server_info() {
+            let server_info = ServerInfo {
+                location_name: "location_name".to_string(),
+            };
+
+            let mut message = capnp::message::Builder::new_default();
+            let mut builder = message.init_root::<super::primitives::ServerInfo::Builder>();
+            server_info.to_primitive(builder);
+            let mut reader = message
+                .get_root_as_reader::<super::primitives::ServerInfo::Reader>()
+                .unwrap();
+            let server_info2 = super::ServerInfo::from_primitive(reader).unwrap();
+            assert_eq!(server_info, server_info2);
+        }
+
+        #[test]
+        fn test_authentication_response() {
+            let authentication_response = AuthenticationResponse {
+                hours_until_refresh: 5,
+                jwt: "jwt".to_string().into_bytes(),
+                permanent_err: "permanent_err".to_string(),
+                retryable_err: "retryable_err".to_string(),
+            };
+
+            let mut message = capnp::message::Builder::new_default();
+            let mut builder =
+                message.init_root::<super::primitives::AuthenticationResponse::Builder>();
+            authentication_response.to_primitive(builder);
+            let mut reader = message
+                .get_root_as_reader::<super::primitives::AuthenticationResponse::Reader>()
+                .unwrap();
+            let authentication_response2 =
+                super::AuthenticationResponse::from_primitive(reader).unwrap();
+            assert_eq!(authentication_response, authentication_response2);
+        }
+
+        #[test]
+        fn test_client_info() {
+            let client_info = ClientInfo {
+                client_id: "client_id".to_string().into_bytes(),
+                features: vec!["feature1".to_string(), "feature2".to_string()],
+                version: "version".to_string(),
+                arch: "arch".to_string(),
+            };
+
+            let mut message = capnp::message::Builder::new_default();
+            let mut builder = message.init_root::<super::primitives::ClientInfo::Builder>();
+            client_info.to_primitive(builder);
+            let mut reader = message
+                .get_root_as_reader::<super::primitives::ClientInfo::Reader>()
+                .unwrap();
+            let client_info2 = super::ClientInfo::from_primitive(reader).unwrap();
+            assert_eq!(client_info, client_info2);
+        }
+
+        #[test]
+        fn test_connection_options() {
+            let connection_options = ConnectionOptions {
+                client: ClientInfo {
+                    client_id: "client_id".to_string().into_bytes(),
+                    features: vec!["feature1".to_string(), "feature2".to_string()],
+                    version: "version".to_string(),
+                    arch: "arch".to_string(),
+                },
+                compression_quality: 5,
+                num_previous_attempts: 5,
+                origin_local_ip: "origin_local_ip".to_string().into_bytes(),
+                replace_existing: true,
+            };
+
+            let mut message = capnp::message::Builder::new_default();
+            let mut builder = message.init_root::<super::primitives::ConnectionOptions::Builder>();
+            connection_options.to_primitive(builder);
+            let mut reader = message
+                .get_root_as_reader::<super::primitives::ConnectionOptions::Reader>()
+                .unwrap();
+            let connection_options2 = super::ConnectionOptions::from_primitive(reader).unwrap();
+            assert_eq!(connection_options, connection_options2);
+        }
+
+        #[test]
+        fn test_connection_response() {
+            let connection_response = ConnectionResponse {
+                result: ConnectionResponseResult::ConnectionDetails(ConnectionDetails {
+                    uuid: "uuid".to_string().into_bytes(),
+                    location_name: "YYZ".to_string(),
+                    tunnel_is_remotely_managed: true,
+                }),
+            };
+
+            let mut message = capnp::message::Builder::new_default();
+            let mut builder = message.init_root::<super::primitives::ConnectionResponse::Builder>();
+            connection_response.to_primitive(builder);
+            let mut reader = message
+                .get_root_as_reader::<super::primitives::ConnectionResponse::Reader>()
+                .unwrap();
+            let connection_response2 = super::ConnectionResponse::from_primitive(reader).unwrap();
+            assert_eq!(connection_response, connection_response2);
+
+            let connection_response = ConnectionResponse {
+                result: ConnectionResponseResult::Error(ConnectionError {
+                    cause: "cause".to_string(),
+                    retry_after: 50,
+                    should_retry: false,
+                }),
+            };
+
+            let mut message = capnp::message::Builder::new_default();
+            let mut builder = message.init_root::<super::primitives::ConnectionResponse::Builder>();
+            connection_response.to_primitive(builder);
+            let mut reader = message
+                .get_root_as_reader::<super::primitives::ConnectionResponse::Reader>()
+                .unwrap();
+            let connection_response2 = super::ConnectionResponse::from_primitive(reader).unwrap();
+            assert_eq!(connection_response, connection_response2);
+        }
+
+        #[test]
+        fn test_connection_details() {
+            let connection_details = ConnectionDetails {
+                uuid: "uuid".to_string().into_bytes(),
+                location_name: "YYZ".to_string(),
+                tunnel_is_remotely_managed: true,
+            };
+
+            let mut message = capnp::message::Builder::new_default();
+            let mut builder = message.init_root::<super::primitives::ConnectionDetails::Builder>();
+            connection_details.to_primitive(builder);
+            let mut reader = message
+                .get_root_as_reader::<super::primitives::ConnectionDetails::Reader>()
+                .unwrap();
+            let connection_details2 = super::ConnectionDetails::from_primitive(reader).unwrap();
+            assert_eq!(connection_details, connection_details2);
+        }
+
+        #[test]
+        fn test_connection_error() {
+            let connection_error = ConnectionError {
+                cause: "cause".to_string(),
+                retry_after: 50,
+                should_retry: false,
+            };
+
+            let mut message = capnp::message::Builder::new_default();
+            let mut builder = message.init_root::<super::primitives::ConnectionError::Builder>();
+            connection_error.to_primitive(builder);
+            let mut reader = message
+                .get_root_as_reader::<super::primitives::ConnectionError::Reader>()
+                .unwrap();
+            let connection_error2 = super::ConnectionError::from_primitive(reader).unwrap();
+            assert_eq!(connection_error, connection_error2);
+        }
+
+        #[test]
+        fn test_tunnel_auth() {
+            let tunnel_auth = TunnelAuth {
+                account_tag: "account_tag".to_string(),
+                tunnel_secret: "tunnel_secret".to_string().into_bytes(),
+            };
+
+            let mut message = capnp::message::Builder::new_default();
+            let mut builder = message.init_root::<super::primitives::TunnelAuth::Builder>();
+            tunnel_auth.to_primitive(builder);
+            let mut reader = message
+                .get_root_as_reader::<super::primitives::TunnelAuth::Reader>()
+                .unwrap();
+            let tunnel_auth2 = super::TunnelAuth::from_primitive(reader).unwrap();
+            assert_eq!(tunnel_auth, tunnel_auth2);
+        }
+
+        #[test]
+        fn test_register_udp_session_response() {
+            let register_udp_session_response = RegisterUdpSessionResponse {
+                err: "err".to_string(),
+                spans: vec![1, 2, 3],
+            };
+
+            let mut message = capnp::message::Builder::new_default();
+            let mut builder =
+                message.init_root::<super::primitives::RegisterUdpSessionResponse::Builder>();
+            register_udp_session_response.to_primitive(builder);
+            let mut reader = message
+                .get_root_as_reader::<super::primitives::RegisterUdpSessionResponse::Reader>()
+                .unwrap();
+            let register_udp_session_response2 =
+                super::RegisterUdpSessionResponse::from_primitive(reader).unwrap();
+            assert_eq!(
+                register_udp_session_response,
+                register_udp_session_response2
+            );
+        }
+
+        #[test]
+        fn test_update_configuration_response() {
+            let update_tunnel_response = UpdateConfigurationResponse {
+                err: "err".to_string(),
+                latest_applied_version: 5,
+            };
+
+            let mut message = capnp::message::Builder::new_default();
+            let mut builder =
+                message.init_root::<super::primitives::UpdateConfigurationResponse::Builder>();
+            update_tunnel_response.to_primitive(builder);
+            let mut reader = message
+                .get_root_as_reader::<super::primitives::UpdateConfigurationResponse::Reader>()
+                .unwrap();
+            let update_tunnel_response2 =
+                super::UpdateConfigurationResponse::from_primitive(reader).unwrap();
+            assert_eq!(update_tunnel_response, update_tunnel_response2);
+        }
+    }
 }
 
 pub mod interfaces {
@@ -561,7 +840,7 @@ pub mod interfaces {
         use super::structs::*;
         use anyhow::Result;
 
-        #[derive(Debug)]
+        #[derive(Clone, Debug, PartialEq, Eq)]
         pub struct RegisterConnectionParams {
             pub auth: TunnelAuth,
             pub tunnel_id: Vec<u8>,
@@ -578,9 +857,7 @@ pub mod interfaces {
                 builder.set_conn_index(self.conn_index);
                 self.options.to_primitive(builder.reborrow().init_options());
             }
-        }
 
-        impl RegisterConnectionParams {
             pub fn from_primitive(
                 primitive: primitives::RegisterConnectionParams::Reader,
             ) -> Result<Self> {
@@ -593,7 +870,7 @@ pub mod interfaces {
             }
         }
 
-        #[derive(Debug)]
+        #[derive(Clone, Debug, PartialEq, Eq)]
         pub struct RegisterConnectionResults {
             pub result: ConnectionResponse,
         }
@@ -604,9 +881,7 @@ pub mod interfaces {
 
                 self.result.to_primitive(builder.reborrow().init_result());
             }
-        }
 
-        impl RegisterConnectionResults {
             pub fn from_primitive(
                 primitive: primitives::RegisterConnectionResults::Reader,
             ) -> Result<Self> {
@@ -615,16 +890,14 @@ pub mod interfaces {
                 })
             }
         }
-        #[derive(Debug)]
+        #[derive(Clone, Debug, PartialEq, Eq)]
         pub struct UnregisterConnectionParams {}
 
         impl UnregisterConnectionParams {
             pub fn to_primitive(&self, builder: primitives::UnregisterConnectionParams::Builder) {
                 let mut builder = builder;
             }
-        }
 
-        impl UnregisterConnectionParams {
             pub fn from_primitive(
                 primitive: primitives::UnregisterConnectionParams::Reader,
             ) -> Result<Self> {
@@ -632,16 +905,14 @@ pub mod interfaces {
             }
         }
 
-        #[derive(Debug)]
+        #[derive(Clone, Debug, PartialEq, Eq)]
         pub struct UnregisterConnectionResults {}
 
         impl UnregisterConnectionResults {
             pub fn to_primitive(&self, builder: primitives::UnregisterConnectionResults::Builder) {
                 let mut builder = builder;
             }
-        }
 
-        impl UnregisterConnectionResults {
             pub fn from_primitive(
                 primitive: primitives::UnregisterConnectionResults::Reader,
             ) -> Result<Self> {
@@ -649,7 +920,7 @@ pub mod interfaces {
             }
         }
 
-        #[derive(Debug)]
+        #[derive(Clone, Debug, PartialEq, Eq)]
         pub struct UpdateLocalConfigurationParams {
             pub config: Vec<u8>,
         }
@@ -663,9 +934,7 @@ pub mod interfaces {
 
                 builder.set_config(&self.config);
             }
-        }
 
-        impl UpdateLocalConfigurationParams {
             pub fn from_primitive(
                 primitive: primitives::UpdateLocalConfigurationParams::Reader,
             ) -> Result<Self> {
@@ -675,7 +944,7 @@ pub mod interfaces {
             }
         }
 
-        #[derive(Debug)]
+        #[derive(Clone, Debug, PartialEq, Eq)]
         pub struct UpdateLocalConfigurationResults {}
 
         impl UpdateLocalConfigurationResults {
@@ -685,13 +954,151 @@ pub mod interfaces {
             ) {
                 let mut builder = builder;
             }
-        }
 
-        impl UpdateLocalConfigurationResults {
             pub fn from_primitive(
                 primitive: primitives::UpdateLocalConfigurationResults::Reader,
             ) -> Result<Self> {
                 Ok(Self {})
+            }
+        }
+
+        #[cfg(test)]
+        mod tests {
+            use super::*;
+
+            #[test]
+            fn test_register_connection_params() {
+                let register_connection_params = RegisterConnectionParams {
+                    auth: TunnelAuth {
+                        account_tag: "account_tag".to_string(),
+                        tunnel_secret: "tunnel_secret".to_string().into_bytes(),
+                    },
+                    tunnel_id: vec![1, 2, 3],
+                    conn_index: 5,
+                    options: ConnectionOptions {
+                        client: ClientInfo {
+                            client_id: "".to_string().into_bytes(),
+                            features: vec!["abc".to_string()],
+                            version: "version".to_string(),
+                            arch: "arch".to_string(),
+                        },
+                        origin_local_ip: "origin_local_ip".to_string().into_bytes(),
+                        replace_existing: true,
+                        compression_quality: 5,
+                        num_previous_attempts: 5,
+                    },
+                };
+
+                let mut message = capnp::message::Builder::new_default();
+                let mut builder =
+                    message.init_root::<super::primitives::RegisterConnectionParams::Builder>();
+                register_connection_params.to_primitive(builder);
+                let mut reader = message
+                    .get_root_as_reader::<super::primitives::RegisterConnectionParams::Reader>()
+                    .unwrap();
+                let register_connection_params2 =
+                    super::RegisterConnectionParams::from_primitive(reader).unwrap();
+                assert_eq!(register_connection_params, register_connection_params2);
+            }
+
+            #[test]
+            fn test_register_connection_request() {
+                let register_connection_request = RegisterConnectionResults {
+                    result: ConnectionResponse {
+                        result: ConnectionResponseResult::ConnectionDetails(ConnectionDetails {
+                            uuid: "uuid".to_string().into_bytes(),
+                            location_name: "YYZ".to_string(),
+                            tunnel_is_remotely_managed: true,
+                        }),
+                    },
+                };
+
+                let mut message = capnp::message::Builder::new_default();
+                let mut builder =
+                    message.init_root::<super::primitives::RegisterConnectionResults::Builder>();
+                register_connection_request.to_primitive(builder);
+                let mut reader = message
+                    .get_root_as_reader::<super::primitives::RegisterConnectionResults::Reader>()
+                    .unwrap();
+                let register_connection_request2 =
+                    super::RegisterConnectionResults::from_primitive(reader).unwrap();
+                assert_eq!(register_connection_request, register_connection_request2);
+            }
+
+            #[test]
+            fn test_unregister_connection_params() {
+                let unregister_connection_params = UnregisterConnectionParams {};
+
+                let mut message = capnp::message::Builder::new_default();
+                let mut builder =
+                    message.init_root::<super::primitives::UnregisterConnectionParams::Builder>();
+                unregister_connection_params.to_primitive(builder);
+                let mut reader = message
+                    .get_root_as_reader::<super::primitives::UnregisterConnectionParams::Reader>()
+                    .unwrap();
+                let unregister_connection_params2 =
+                    super::UnregisterConnectionParams::from_primitive(reader).unwrap();
+                assert_eq!(unregister_connection_params, unregister_connection_params2);
+            }
+
+            #[test]
+            fn test_unregister_connection_results() {
+                let unregister_connection_results = UnregisterConnectionResults {};
+
+                let mut message = capnp::message::Builder::new_default();
+                let mut builder =
+                    message.init_root::<super::primitives::UnregisterConnectionResults::Builder>();
+                unregister_connection_results.to_primitive(builder);
+                let mut reader = message
+                    .get_root_as_reader::<super::primitives::UnregisterConnectionResults::Reader>()
+                    .unwrap();
+                let unregister_connection_results2 =
+                    super::UnregisterConnectionResults::from_primitive(reader).unwrap();
+                assert_eq!(
+                    unregister_connection_results,
+                    unregister_connection_results2
+                );
+            }
+
+            #[test]
+            fn test_update_local_configuration_params() {
+                let update_local_configuration_params = UpdateLocalConfigurationParams {
+                    config: vec![1, 2, 3],
+                };
+
+                let mut message = capnp::message::Builder::new_default();
+                let mut builder = message
+                    .init_root::<super::primitives::UpdateLocalConfigurationParams::Builder>();
+                update_local_configuration_params.to_primitive(builder);
+                let mut reader = message
+                    .get_root_as_reader::<super::primitives::UpdateLocalConfigurationParams::Reader>()
+                    .unwrap();
+                let update_local_configuration_params2 =
+                    super::UpdateLocalConfigurationParams::from_primitive(reader).unwrap();
+                assert_eq!(
+                    update_local_configuration_params,
+                    update_local_configuration_params2
+                );
+            }
+
+            #[test]
+            fn test_update_local_configuration_results() {
+                let update_local_configuration_results = UpdateLocalConfigurationResults {};
+
+                let mut message = capnp::message::Builder::new_default();
+                let mut builder = message
+                    .init_root::<super::primitives::UpdateLocalConfigurationResults::Builder>(
+                );
+                update_local_configuration_results.to_primitive(builder);
+                let mut reader = message
+                    .get_root_as_reader::<super::primitives::UpdateLocalConfigurationResults::Reader>()
+                    .unwrap();
+                let update_local_configuration_results2 =
+                    super::UpdateLocalConfigurationResults::from_primitive(reader).unwrap();
+                assert_eq!(
+                    update_local_configuration_results,
+                    update_local_configuration_results2
+                );
             }
         }
     }
@@ -703,7 +1110,7 @@ pub mod interfaces {
         use super::structs::*;
         use anyhow::Result;
 
-        #[derive(Debug)]
+        #[derive(Clone, Debug, PartialEq, Eq)]
         pub struct RegisterTunnelParams {
             pub origin_cert: Vec<u8>,
             pub hostname: String,
@@ -718,9 +1125,7 @@ pub mod interfaces {
                 builder.set_hostname(&self.hostname);
                 self.options.to_primitive(builder.reborrow().init_options());
             }
-        }
 
-        impl RegisterTunnelParams {
             pub fn from_primitive(
                 primitive: primitives::RegisterTunnelParams::Reader,
             ) -> Result<Self> {
@@ -732,7 +1137,7 @@ pub mod interfaces {
             }
         }
 
-        #[derive(Debug)]
+        #[derive(Clone, Debug, PartialEq, Eq)]
         pub struct RegisterTunnelResults {
             pub result: TunnelRegistration,
         }
@@ -743,9 +1148,7 @@ pub mod interfaces {
 
                 self.result.to_primitive(builder.reborrow().init_result());
             }
-        }
 
-        impl RegisterTunnelResults {
             pub fn from_primitive(
                 primitive: primitives::RegisterTunnelResults::Reader,
             ) -> Result<Self> {
@@ -755,16 +1158,14 @@ pub mod interfaces {
             }
         }
 
-        #[derive(Debug)]
+        #[derive(Clone, Debug, PartialEq, Eq)]
         pub struct GetServerInfoParams {}
 
         impl GetServerInfoParams {
             pub fn to_primitive(&self, builder: primitives::GetServerInfoParams::Builder) {
                 let mut builder = builder;
             }
-        }
 
-        impl GetServerInfoParams {
             pub fn from_primitive(
                 primitive: primitives::GetServerInfoParams::Reader,
             ) -> Result<Self> {
@@ -772,7 +1173,7 @@ pub mod interfaces {
             }
         }
 
-        #[derive(Debug)]
+        #[derive(Clone, Debug, PartialEq, Eq)]
         pub struct GetServerInfoResults {
             pub result: ServerInfo,
         }
@@ -783,9 +1184,7 @@ pub mod interfaces {
 
                 self.result.to_primitive(builder.reborrow().init_result());
             }
-        }
 
-        impl GetServerInfoResults {
             pub fn from_primitive(
                 primitive: primitives::GetServerInfoResults::Reader,
             ) -> Result<Self> {
@@ -795,7 +1194,7 @@ pub mod interfaces {
             }
         }
 
-        #[derive(Debug)]
+        #[derive(Clone, Debug, PartialEq, Eq)]
         pub struct UnregisterTunnelParams {
             pub grace_period_nano_sec: i64,
         }
@@ -806,9 +1205,7 @@ pub mod interfaces {
 
                 builder.set_grace_period_nano_sec(self.grace_period_nano_sec);
             }
-        }
 
-        impl UnregisterTunnelParams {
             pub fn from_primitive(
                 primitive: primitives::UnregisterTunnelParams::Reader,
             ) -> Result<Self> {
@@ -818,16 +1215,14 @@ pub mod interfaces {
             }
         }
 
-        #[derive(Debug)]
+        #[derive(Clone, Debug, PartialEq, Eq)]
         pub struct UnregisterTunnelResults {}
 
         impl UnregisterTunnelResults {
             pub fn to_primitive(&self, builder: primitives::UnregisterTunnelResults::Builder) {
                 let mut builder = builder;
             }
-        }
 
-        impl UnregisterTunnelResults {
             pub fn from_primitive(
                 primitive: primitives::UnregisterTunnelResults::Reader,
             ) -> Result<Self> {
@@ -835,7 +1230,7 @@ pub mod interfaces {
             }
         }
 
-        #[derive(Debug)]
+        #[derive(Clone, Debug, PartialEq, Eq)]
         pub struct ObsoleteDeclarativeTunnelConnectParams {}
 
         impl ObsoleteDeclarativeTunnelConnectParams {
@@ -845,9 +1240,7 @@ pub mod interfaces {
             ) {
                 let mut builder = builder;
             }
-        }
 
-        impl ObsoleteDeclarativeTunnelConnectParams {
             pub fn from_primitive(
                 primitive: primitives::ObsoleteDeclarativeTunnelConnectParams::Reader,
             ) -> Result<Self> {
@@ -855,7 +1248,8 @@ pub mod interfaces {
             }
         }
 
-        #[derive(Debug)]
+        #[derive(Clone, Debug, PartialEq, Eq)]
+
         pub struct ObsoleteDeclarativeTunnelConnectResults {}
 
         impl ObsoleteDeclarativeTunnelConnectResults {
@@ -865,9 +1259,7 @@ pub mod interfaces {
             ) {
                 let mut builder = builder;
             }
-        }
 
-        impl ObsoleteDeclarativeTunnelConnectResults {
             pub fn from_primitive(
                 primitive: primitives::ObsoleteDeclarativeTunnelConnectResults::Reader,
             ) -> Result<Self> {
@@ -875,7 +1267,7 @@ pub mod interfaces {
             }
         }
 
-        #[derive(Debug)]
+        #[derive(Clone, Debug, PartialEq, Eq)]
         pub struct AuthenticateParams {
             pub origin_cert: Vec<u8>,
             pub hostname: String,
@@ -890,9 +1282,7 @@ pub mod interfaces {
                 builder.set_hostname(&self.hostname);
                 self.options.to_primitive(builder.reborrow().init_options());
             }
-        }
 
-        impl AuthenticateParams {
             pub fn from_primitive(
                 primitive: primitives::AuthenticateParams::Reader,
             ) -> Result<Self> {
@@ -904,7 +1294,7 @@ pub mod interfaces {
             }
         }
 
-        #[derive(Debug)]
+        #[derive(Clone, Debug, PartialEq, Eq)]
         pub struct AuthenticateResults {
             pub result: AuthenticationResponse,
         }
@@ -915,9 +1305,7 @@ pub mod interfaces {
 
                 self.result.to_primitive(builder.reborrow().init_result());
             }
-        }
 
-        impl AuthenticateResults {
             pub fn from_primitive(
                 primitive: primitives::AuthenticateResults::Reader,
             ) -> Result<Self> {
@@ -927,7 +1315,7 @@ pub mod interfaces {
             }
         }
 
-        #[derive(Debug)]
+        #[derive(Clone, Debug, PartialEq, Eq)]
         pub struct ReconnectTunnelParams {
             pub jwt: Vec<u8>,
             pub event_digest: Vec<u8>,
@@ -946,9 +1334,7 @@ pub mod interfaces {
                 builder.set_hostname(&self.hostname);
                 self.options.to_primitive(builder.reborrow().init_options());
             }
-        }
 
-        impl ReconnectTunnelParams {
             pub fn from_primitive(
                 primitive: primitives::ReconnectTunnelParams::Reader,
             ) -> Result<Self> {
@@ -962,7 +1348,7 @@ pub mod interfaces {
             }
         }
 
-        #[derive(Debug)]
+        #[derive(Clone, Debug, PartialEq, Eq)]
         pub struct ReconnectTunnelResults {
             pub result: TunnelRegistration,
         }
@@ -973,15 +1359,297 @@ pub mod interfaces {
 
                 self.result.to_primitive(builder.reborrow().init_result());
             }
-        }
 
-        impl ReconnectTunnelResults {
             pub fn from_primitive(
                 primitive: primitives::ReconnectTunnelResults::Reader,
             ) -> Result<Self> {
                 Ok(Self {
                     result: TunnelRegistration::from_primitive(primitive.get_result()?)?,
                 })
+            }
+        }
+
+        mod tests {
+            #[allow(unused_imports)]
+            use super::*;
+
+            #[test]
+            fn test_register_tunnel_params() {
+                let params = RegisterTunnelParams {
+                    hostname: "test".to_string(),
+                    options: RegistrationOptions {
+                        existing_tunnel_policy: super::primitives::ExistingTunnelPolicy::Ignore,
+                        client_id: "client_id".to_string(),
+                        compression_quality: 1,
+                        connection_id: 7,
+                        features: vec!["123".to_string()],
+                        is_autoupdated: true,
+                        num_previous_attempts: 2,
+                        origin_local_ip: "".to_string(),
+                        os: "os".to_string(),
+                        pool_name: "pool_name".to_string(),
+                        run_from_terminal: true,
+                        tags: vec![Tag {
+                            name: "tag".to_string(),
+                            value: "value".to_string(),
+                        }],
+                        uuid: "uuid".to_string(),
+                        version: "version".to_string(),
+                    },
+                    origin_cert: vec![1, 2, 3],
+                };
+
+                let mut message = capnp::message::Builder::new_default();
+                let mut builder = message.init_root::<primitives::RegisterTunnelParams::Builder>();
+                params.to_primitive(builder);
+                let mut reader = message
+                    .get_root_as_reader::<super::primitives::RegisterTunnelParams::Reader>()
+                    .unwrap();
+                let params2 = super::RegisterTunnelParams::from_primitive(reader).unwrap();
+                assert_eq!(params, params2);
+            }
+
+            #[test]
+            fn test_register_tunnel_results() {
+                let results = RegisterTunnelResults {
+                    result: TunnelRegistration {
+                        conn_digest: vec![1, 2, 3],
+                        event_digest: vec![4, 5, 6],
+                        err: "Error".to_string(),
+                        log_lines: vec!["log".to_string()],
+                        permanent_failure: true,
+                        retry_after_seconds: 1,
+                        tunnel_i_d: "tunnel_id".to_string(),
+                        url: "url".to_string(),
+                    },
+                };
+
+                let mut message = capnp::message::Builder::new_default();
+                let mut builder = message.init_root::<primitives::RegisterTunnelResults::Builder>();
+                results.to_primitive(builder);
+                let mut reader = message
+                    .get_root_as_reader::<super::primitives::RegisterTunnelResults::Reader>()
+                    .unwrap();
+                let results2 = super::RegisterTunnelResults::from_primitive(reader).unwrap();
+                assert_eq!(results, results2);
+            }
+
+            #[test]
+            fn test_get_server_info_params() {
+                let params = GetServerInfoParams {};
+                let mut message = capnp::message::Builder::new_default();
+                let mut builder = message.init_root::<primitives::GetServerInfoParams::Builder>();
+                params.to_primitive(builder);
+                let mut reader = message
+                    .get_root_as_reader::<super::primitives::GetServerInfoParams::Reader>()
+                    .unwrap();
+                let params2 = super::GetServerInfoParams::from_primitive(reader).unwrap();
+                assert_eq!(params, params2);
+            }
+
+            #[test]
+            fn test_get_server_info_results() {
+                let results = GetServerInfoResults {
+                    result: ServerInfo {
+                        location_name: "location_name".to_string(),
+                    },
+                };
+
+                let mut message = capnp::message::Builder::new_default();
+                let mut builder = message.init_root::<primitives::GetServerInfoResults::Builder>();
+                results.to_primitive(builder);
+                let mut reader = message
+                    .get_root_as_reader::<super::primitives::GetServerInfoResults::Reader>()
+                    .unwrap();
+                let results2 = super::GetServerInfoResults::from_primitive(reader).unwrap();
+                assert_eq!(results, results2);
+            }
+
+            #[test]
+            fn test_unregister_tunnel_params() {
+                let params = UnregisterTunnelParams {
+                    grace_period_nano_sec: 1,
+                };
+
+                let mut message = capnp::message::Builder::new_default();
+                let mut builder =
+                    message.init_root::<primitives::UnregisterTunnelParams::Builder>();
+                params.to_primitive(builder);
+                let mut reader = message
+                    .get_root_as_reader::<super::primitives::UnregisterTunnelParams::Reader>()
+                    .unwrap();
+                let params2 = super::UnregisterTunnelParams::from_primitive(reader).unwrap();
+                assert_eq!(params, params2);
+            }
+
+            #[test]
+            fn test_unregister_tunnel_results() {
+                let results = UnregisterTunnelResults {};
+
+                let mut message = capnp::message::Builder::new_default();
+                let mut builder =
+                    message.init_root::<primitives::UnregisterTunnelResults::Builder>();
+                results.to_primitive(builder);
+                let mut reader = message
+                    .get_root_as_reader::<super::primitives::UnregisterTunnelResults::Reader>()
+                    .unwrap();
+                let results2 = super::UnregisterTunnelResults::from_primitive(reader).unwrap();
+                assert_eq!(results, results2);
+            }
+
+            #[test]
+            fn test_obsolete_declarative_tunnel_connect_params() {
+                let params = ObsoleteDeclarativeTunnelConnectParams {};
+
+                let mut message = capnp::message::Builder::new_default();
+                let mut builder = message
+                    .init_root::<primitives::ObsoleteDeclarativeTunnelConnectParams::Builder>(
+                );
+                params.to_primitive(builder);
+                let mut reader = message
+                    .get_root_as_reader::<super::primitives::ObsoleteDeclarativeTunnelConnectParams::Reader>()
+                    .unwrap();
+                let params2 =
+                    super::ObsoleteDeclarativeTunnelConnectParams::from_primitive(reader).unwrap();
+                assert_eq!(params, params2);
+            }
+
+            #[test]
+            fn test_obsolete_declarative_tunnel_connect_results() {
+                let results = ObsoleteDeclarativeTunnelConnectResults {};
+
+                let mut message = capnp::message::Builder::new_default();
+                let mut builder = message
+                    .init_root::<primitives::ObsoleteDeclarativeTunnelConnectResults::Builder>(
+                );
+                results.to_primitive(builder);
+                let mut reader = message
+                    .get_root_as_reader::<super::primitives::ObsoleteDeclarativeTunnelConnectResults::Reader>()
+                    .unwrap();
+                let results2 =
+                    super::ObsoleteDeclarativeTunnelConnectResults::from_primitive(reader).unwrap();
+                assert_eq!(results, results2);
+            }
+
+            #[test]
+            fn test_authenticate_params() {
+                let params = AuthenticateParams {
+                    origin_cert: "origin_cert".to_string().into_bytes(),
+                    hostname: "hostname".to_string(),
+                    options: RegistrationOptions {
+                        client_id: "client_id".to_string(),
+                        compression_quality: 1,
+                        connection_id: 8,
+                        existing_tunnel_policy: primitives::ExistingTunnelPolicy::Ignore,
+                        features: vec!["feature".to_string()],
+                        is_autoupdated: true,
+                        num_previous_attempts: 1,
+                        origin_local_ip: "origin_local_ip".to_string(),
+                        os: "os".to_string(),
+                        pool_name: "pool_name".to_string(),
+                        run_from_terminal: true,
+                        tags: vec![Tag {
+                            name: "name".to_string(),
+                            value: "value".to_string(),
+                        }],
+                        uuid: "uuid".to_string(),
+                        version: "version".to_string(),
+                    },
+                };
+
+                let mut message = capnp::message::Builder::new_default();
+                let mut builder = message.init_root::<primitives::AuthenticateParams::Builder>();
+                params.to_primitive(builder);
+                let mut reader = message
+                    .get_root_as_reader::<super::primitives::AuthenticateParams::Reader>()
+                    .unwrap();
+                let params2 = super::AuthenticateParams::from_primitive(reader).unwrap();
+                assert_eq!(params, params2);
+            }
+
+            #[test]
+            fn test_authenticate_results() {
+                let results = AuthenticateResults {
+                    result: AuthenticationResponse {
+                        permanent_err: "error".to_string(),
+                        retryable_err: "retry".to_string(),
+                        jwt: "jwt".to_string().into_bytes(),
+                        hours_until_refresh: 5,
+                    },
+                };
+
+                let mut message = capnp::message::Builder::new_default();
+                let mut builder = message.init_root::<primitives::AuthenticateResults::Builder>();
+                results.to_primitive(builder);
+                let mut reader = message
+                    .get_root_as_reader::<super::primitives::AuthenticateResults::Reader>()
+                    .unwrap();
+                let results2 = super::AuthenticateResults::from_primitive(reader).unwrap();
+                assert_eq!(results, results2);
+            }
+
+            #[test]
+            fn test_reconnect_tunnel_params() {
+                let params = ReconnectTunnelParams {
+                    jwt: "jwt".to_string().into_bytes(),
+                    event_digest: "event_digest".to_string().into_bytes(),
+                    conn_digest: "conn_digest".to_string().into_bytes(),
+                    hostname: "hostname".to_string(),
+                    options: RegistrationOptions {
+                        existing_tunnel_policy: super::primitives::ExistingTunnelPolicy::Ignore,
+                        client_id: "client_id".to_string(),
+                        compression_quality: 1,
+                        connection_id: 7,
+                        features: vec!["123".to_string()],
+                        is_autoupdated: true,
+                        num_previous_attempts: 2,
+                        origin_local_ip: "".to_string(),
+                        os: "os".to_string(),
+                        pool_name: "pool_name".to_string(),
+                        run_from_terminal: true,
+                        tags: vec![Tag {
+                            name: "tag".to_string(),
+                            value: "value".to_string(),
+                        }],
+                        uuid: "uuid".to_string(),
+                        version: "version".to_string(),
+                    },
+                };
+
+                let mut message = capnp::message::Builder::new_default();
+                let mut builder = message.init_root::<primitives::ReconnectTunnelParams::Builder>();
+                params.to_primitive(builder);
+                let mut reader = message
+                    .get_root_as_reader::<super::primitives::ReconnectTunnelParams::Reader>()
+                    .unwrap();
+                let params2 = super::ReconnectTunnelParams::from_primitive(reader).unwrap();
+                assert_eq!(params, params2);
+            }
+
+            #[test]
+            fn test_reconnect_tunnel_results() {
+                let results = ReconnectTunnelResults {
+                    result: TunnelRegistration {
+                        conn_digest: vec![1, 2, 3],
+                        event_digest: vec![4, 5, 6],
+                        err: "Error".to_string(),
+                        log_lines: vec!["log".to_string()],
+                        permanent_failure: true,
+                        retry_after_seconds: 1,
+                        tunnel_i_d: "tunnel_id".to_string(),
+                        url: "url".to_string(),
+                    },
+                };
+
+                let mut message = capnp::message::Builder::new_default();
+                let mut builder =
+                    message.init_root::<primitives::ReconnectTunnelResults::Builder>();
+                results.to_primitive(builder);
+                let mut reader = message
+                    .get_root_as_reader::<super::primitives::ReconnectTunnelResults::Reader>()
+                    .unwrap();
+                let results2 = super::ReconnectTunnelResults::from_primitive(reader).unwrap();
+                assert_eq!(results, results2);
             }
         }
     }
@@ -993,7 +1661,7 @@ pub mod interfaces {
         use super::structs::*;
         use anyhow::Result;
 
-        #[derive(Debug)]
+        #[derive(Clone, Debug, PartialEq, Eq)]
         pub struct RegisterUdpSessionParams {
             pub session_id: Vec<u8>,
             pub dst_ip: Vec<u8>,
@@ -1010,9 +1678,7 @@ pub mod interfaces {
                 builder.set_close_after_idle_hint(self.close_after_idle_hint);
                 builder.set_trace_context(&self.trace_context);
             }
-        }
 
-        impl RegisterUdpSessionParams {
             pub fn from_primitive(
                 primitive: primitives::RegisterUdpSessionParams::Reader,
             ) -> Result<Self> {
@@ -1025,7 +1691,7 @@ pub mod interfaces {
             }
         }
 
-        #[derive(Debug)]
+        #[derive(Clone, Debug, PartialEq, Eq)]
         pub struct RegisterUdpSessionResults {
             pub result: RegisterUdpSessionResponse,
         }
@@ -1036,9 +1702,7 @@ pub mod interfaces {
 
                 self.result.to_primitive(builder.reborrow().init_result());
             }
-        }
 
-        impl RegisterUdpSessionResults {
             pub fn from_primitive(
                 primitive: primitives::RegisterUdpSessionResults::Reader,
             ) -> Result<Self> {
@@ -1048,7 +1712,7 @@ pub mod interfaces {
             }
         }
 
-        #[derive(Debug)]
+        #[derive(Clone, Debug, PartialEq, Eq)]
         pub struct UnregisterUdpSessionParams {
             pub session_id: Vec<u8>,
             pub message: String,
@@ -1061,9 +1725,7 @@ pub mod interfaces {
                 builder.set_session_id(&self.session_id);
                 builder.set_message(&self.message);
             }
-        }
 
-        impl UnregisterUdpSessionParams {
             pub fn from_primitive(
                 primitive: primitives::UnregisterUdpSessionParams::Reader,
             ) -> Result<Self> {
@@ -1074,20 +1736,96 @@ pub mod interfaces {
             }
         }
 
-        #[derive(Debug)]
+        #[derive(Clone, Debug, PartialEq, Eq)]
         pub struct UnregisterUdpSessionResults {}
 
         impl UnregisterUdpSessionResults {
             pub fn to_primitive(&self, builder: primitives::UnregisterUdpSessionResults::Builder) {
                 let mut builder = builder;
             }
-        }
 
-        impl UnregisterUdpSessionResults {
             pub fn from_primitive(
                 primitive: primitives::UnregisterUdpSessionResults::Reader,
             ) -> Result<Self> {
                 Ok(Self {})
+            }
+        }
+
+        #[cfg(test)]
+        mod tests {
+            use super::*;
+
+            #[test]
+            fn test_register_udp_session_params() {
+                let params = RegisterUdpSessionParams {
+                    session_id: vec![1, 2, 3],
+                    dst_ip: vec![4, 5, 6],
+                    close_after_idle_hint: 1,
+                    trace_context: "trace_context".to_string(),
+                };
+
+                let mut message = capnp::message::Builder::new_default();
+                let mut builder =
+                    message.init_root::<primitives::RegisterUdpSessionParams::Builder>();
+                params.to_primitive(builder);
+                let mut reader = message
+                    .get_root_as_reader::<super::primitives::RegisterUdpSessionParams::Reader>()
+                    .unwrap();
+                let params2 = super::RegisterUdpSessionParams::from_primitive(reader).unwrap();
+                assert_eq!(params, params2);
+            }
+
+            #[test]
+            fn test_register_udp_session_results() {
+                let results = RegisterUdpSessionResults {
+                    result: RegisterUdpSessionResponse {
+                        err: "Error".to_string(),
+                        spans: vec![1, 2, 4, 5],
+                    },
+                };
+
+                let mut message = capnp::message::Builder::new_default();
+                let mut builder =
+                    message.init_root::<primitives::RegisterUdpSessionResults::Builder>();
+                results.to_primitive(builder);
+                let mut reader = message
+                    .get_root_as_reader::<super::primitives::RegisterUdpSessionResults::Reader>()
+                    .unwrap();
+                let results2 = super::RegisterUdpSessionResults::from_primitive(reader).unwrap();
+                assert_eq!(results, results2);
+            }
+
+            #[test]
+            fn test_unregister_udp_session_params() {
+                let params = UnregisterUdpSessionParams {
+                    session_id: vec![1, 2, 3],
+                    message: "message".to_string(),
+                };
+
+                let mut message = capnp::message::Builder::new_default();
+                let mut builder =
+                    message.init_root::<primitives::UnregisterUdpSessionParams::Builder>();
+                params.to_primitive(builder);
+                let mut reader = message
+                    .get_root_as_reader::<super::primitives::UnregisterUdpSessionParams::Reader>()
+                    .unwrap();
+                let params2 = super::UnregisterUdpSessionParams::from_primitive(reader).unwrap();
+                assert_eq!(params, params2);
+            }
+
+            #[test]
+            fn test_unregister_udp_session_results() {
+                let results = UnregisterUdpSessionResults {};
+
+                let mut message = capnp::message::Builder::new_default();
+                let mut builder =
+                    message.init_root::<primitives::UnregisterUdpSessionResults::Builder>();
+                results.to_primitive(builder);
+                let mut reader = message
+                    .get_root_as_reader::<super::primitives::UnregisterUdpSessionResults::Reader>()
+                    .unwrap();
+                let results2 = super::UnregisterUdpSessionResults::from_primitive(reader).unwrap();
+                assert_eq!(results, results2);
             }
         }
     }
@@ -1099,7 +1837,7 @@ pub mod interfaces {
         use super::structs::*;
         use anyhow::Result;
 
-        #[derive(Debug)]
+        #[derive(Clone, Debug, PartialEq, Eq)]
         pub struct UpdateConfigurationParams {
             pub version: i32,
             pub config: Vec<u8>,
@@ -1112,9 +1850,7 @@ pub mod interfaces {
                 builder.set_version(self.version);
                 builder.set_config(&self.config);
             }
-        }
 
-        impl UpdateConfigurationParams {
             pub fn from_primitive(
                 primitive: primitives::UpdateConfigurationParams::Reader,
             ) -> Result<Self> {
@@ -1125,7 +1861,7 @@ pub mod interfaces {
             }
         }
 
-        #[derive(Debug)]
+        #[derive(Clone, Debug, PartialEq, Eq)]
         pub struct UpdateConfigurationResults {
             pub result: UpdateConfigurationResponse,
         }
@@ -1136,15 +1872,56 @@ pub mod interfaces {
 
                 self.result.to_primitive(builder.reborrow().init_result());
             }
-        }
 
-        impl UpdateConfigurationResults {
             pub fn from_primitive(
                 primitive: primitives::UpdateConfigurationResults::Reader,
             ) -> Result<Self> {
                 Ok(Self {
                     result: UpdateConfigurationResponse::from_primitive(primitive.get_result()?)?,
                 })
+            }
+        }
+
+        #[cfg(test)]
+        mod tests {
+            use super::*;
+
+            #[test]
+            fn test_update_configuration_params() {
+                let params = UpdateConfigurationParams {
+                    version: 1,
+                    config: vec![1, 2, 3],
+                };
+
+                let mut message = capnp::message::Builder::new_default();
+                let mut builder =
+                    message.init_root::<primitives::UpdateConfigurationParams::Builder>();
+                params.to_primitive(builder);
+                let mut reader = message
+                    .get_root_as_reader::<super::primitives::UpdateConfigurationParams::Reader>()
+                    .unwrap();
+                let params2 = super::UpdateConfigurationParams::from_primitive(reader).unwrap();
+                assert_eq!(params, params2);
+            }
+
+            #[test]
+            fn test_update_configuration_results() {
+                let results = UpdateConfigurationResults {
+                    result: UpdateConfigurationResponse {
+                        err: "Error".to_string(),
+                        latest_applied_version: 1,
+                    },
+                };
+
+                let mut message = capnp::message::Builder::new_default();
+                let mut builder =
+                    message.init_root::<primitives::UpdateConfigurationResults::Builder>();
+                results.to_primitive(builder);
+                let mut reader = message
+                    .get_root_as_reader::<super::primitives::UpdateConfigurationResults::Reader>()
+                    .unwrap();
+                let results2 = super::UpdateConfigurationResults::from_primitive(reader).unwrap();
+                assert_eq!(results, results2);
             }
         }
     }

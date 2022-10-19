@@ -19,7 +19,7 @@ pub mod structs {
 
     use super::primitives;
 
-    #[derive(Clone, Debug)]
+    #[derive(Clone, Debug, PartialEq, Eq)]
     pub struct ConnectRequest {
         pub dest: String,
         pub connection_type: primitives::ConnectionType,
@@ -52,7 +52,7 @@ pub mod structs {
         }
     }
 
-    #[derive(Clone, Debug)]
+    #[derive(Clone, Debug, PartialEq, Eq)]
     pub struct Metadata {
         pub key: String,
         pub val: String,
@@ -74,7 +74,7 @@ pub mod structs {
         }
     }
 
-    #[derive(Clone, Debug)]
+    #[derive(Clone, Debug, PartialEq, Eq)]
     pub struct ConnectResponse {
         pub error: Option<String>,
         pub metadata: Vec<Metadata>,
@@ -103,6 +103,105 @@ pub mod structs {
                 error: Some(primitive.get_error()?.to_string()),
                 metadata,
             })
+        }
+    }
+
+    #[cfg(test)]
+    mod tests {
+        use super::*;
+
+        #[test]
+        fn test_connect_request() {
+            let mut m = ConnectRequest {
+                dest: "test".to_string(),
+                connection_type: primitives::ConnectionType::Http,
+                metadata: vec![Metadata {
+                    key: "key".to_string(),
+                    val: "val".to_string(),
+                }],
+            };
+
+            let mut buf = Vec::new();
+            {
+                let mut message = capnp::message::Builder::new_default();
+                {
+                    let mut builder = message.init_root::<primitives::ConnectRequest::Builder>();
+                    m.to_primitive(builder);
+                }
+                capnp::serialize::write_message(&mut buf, &message).unwrap();
+            }
+
+            let message_reader =
+                capnp::serialize::read_message(&mut &buf[..], capnp::message::ReaderOptions::new())
+                    .unwrap();
+            let reader = message_reader
+                .get_root::<primitives::ConnectRequest::Reader>()
+                .unwrap();
+
+            let m2 = ConnectRequest::from_primitive(reader).unwrap();
+
+            assert_eq!(m, m2);
+        }
+
+        #[test]
+        fn test_metadata() {
+            let mut m = Metadata {
+                key: "key".to_string(),
+                val: "val".to_string(),
+            };
+
+            let mut buf = Vec::new();
+            {
+                let mut message = capnp::message::Builder::new_default();
+                {
+                    let mut builder = message.init_root::<primitives::Metadata::Builder>();
+                    m.to_primitive(builder);
+                }
+                capnp::serialize::write_message(&mut buf, &message).unwrap();
+            }
+
+            let message_reader =
+                capnp::serialize::read_message(&mut &buf[..], capnp::message::ReaderOptions::new())
+                    .unwrap();
+            let reader = message_reader
+                .get_root::<primitives::Metadata::Reader>()
+                .unwrap();
+
+            let m2 = Metadata::from_primitive(reader).unwrap();
+
+            assert_eq!(m, m2);
+        }
+
+        #[test]
+        fn test_connect_response() {
+            let mut m = ConnectResponse {
+                error: Some("test".to_string()),
+                metadata: vec![Metadata {
+                    key: "key".to_string(),
+                    val: "val".to_string(),
+                }],
+            };
+
+            let mut buf = Vec::new();
+            {
+                let mut message = capnp::message::Builder::new_default();
+                {
+                    let mut builder = message.init_root::<primitives::ConnectResponse::Builder>();
+                    m.to_primitive(builder);
+                }
+                capnp::serialize::write_message(&mut buf, &message).unwrap();
+            }
+
+            let message_reader =
+                capnp::serialize::read_message(&mut &buf[..], capnp::message::ReaderOptions::new())
+                    .unwrap();
+            let reader = message_reader
+                .get_root::<primitives::ConnectResponse::Reader>()
+                .unwrap();
+
+            let m2 = ConnectResponse::from_primitive(reader).unwrap();
+
+            assert_eq!(m, m2);
         }
     }
 }

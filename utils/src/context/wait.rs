@@ -61,7 +61,7 @@ impl Handle {
 
         (
             Context {
-                ctx: RefContext::from(_ctx),
+                ctx: _ctx,
                 _owner: owner.clone(),
             },
             Self {

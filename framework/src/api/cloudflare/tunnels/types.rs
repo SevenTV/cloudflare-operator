@@ -2,7 +2,7 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
-#[derive(Serialize, Deserialize, Debug, Default, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, Default, Clone, PartialEq, Eq)]
 pub struct Tunnel {
     #[serde(default)]
     pub id: String,
@@ -30,7 +30,7 @@ pub struct Tunnel {
     pub remote_config: bool,
 }
 
-#[derive(Serialize, Deserialize, Debug, Default, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, Default, Clone, PartialEq, Eq)]
 pub struct TunnelConn {
     #[serde(default)]
     pub colo_name: String,
@@ -50,7 +50,7 @@ pub struct TunnelConn {
     pub client_version: String,
 }
 
-#[derive(Serialize, Deserialize, Debug, Default, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, Default, Clone, PartialEq, Eq)]
 pub struct TunnelRequest {
     #[serde(default)]
     pub name: String,
@@ -58,7 +58,7 @@ pub struct TunnelRequest {
     pub tunnel_secret: String,
 }
 
-#[derive(Serialize, Deserialize, Debug, Default, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, Default, Clone, PartialEq, Eq)]
 pub struct TunnelConnection {
     #[serde(default)]
     pub id: String,
