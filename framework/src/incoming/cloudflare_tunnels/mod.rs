@@ -3,7 +3,7 @@ use std::{collections::HashMap, sync::Arc, time::Duration};
 use anyhow::Result;
 use tokio::{select, sync::Mutex};
 use tracing::{error, info};
-use utils::context::wait::Context;
+use utils::{common::handle_errors, context::wait::Context};
 use uuid::Uuid;
 
 mod dns;
@@ -99,7 +99,7 @@ impl Supervisor {
             h
         };
 
-        utils::handle_errors(handles)?;
+        handle_errors(handles)?;
 
         Ok(())
     }

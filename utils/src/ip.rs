@@ -57,3 +57,20 @@ pub async fn support_ipv4() -> bool {
 
     false
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn test_support_ipv6() {
+        // This test will fail if the host doesn't support IPv6
+        assert!(support_ipv6().await);
+    }
+
+    #[tokio::test]
+    async fn test_support_ipv4() {
+        // This test will fail if the host doesn't support IPv4
+        assert!(support_ipv4().await);
+    }
+}

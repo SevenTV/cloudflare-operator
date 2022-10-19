@@ -32,3 +32,4 @@ tuple-conv = "1.0.1"
 capnp-futures = "0.14.2"
 rand = "0.8.5"
 tracing = "0.1.37"
+hyper = { version = "0.14.20", features = ["full"] }

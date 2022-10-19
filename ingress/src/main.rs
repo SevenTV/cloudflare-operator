@@ -2,7 +2,6 @@ use std::process::exit;
 
 mod app;
 mod config;
-mod helpers;
 mod setup;
 
 use tracing::{error, info};

@@ -1,5 +1,6 @@
 use std::sync::Arc;
 
+use ::utils::common::handle_errors;
 use ::utils::context::wait::Context;
 use anyhow::{anyhow, Result};
 use futures::StreamExt;
@@ -118,7 +119,7 @@ impl EdgeTunnelClient {
             })
         };
 
-        ::utils::handle_errors(join!(control_fut, new_streams_fut).to_vec())
+        handle_errors(join!(control_fut, new_streams_fut).to_vec())
             .map_err(|e| anyhow!("serve quic failed: {:?}", e))?;
 
         Ok(())

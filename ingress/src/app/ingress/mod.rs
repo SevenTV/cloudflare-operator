@@ -5,7 +5,10 @@ use notify::Watcher;
 use tokio::{join, select, sync::mpsc::Sender};
 use tracing::error;
 use tuple_conv::RepeatedTuple;
-use utils::context::wait::{Context, Handle};
+use utils::{
+    common::{detect_finish, handle_errors},
+    context::wait::{Context, Handle},
+};
 
 use crate::config::Config;
 
@@ -49,7 +52,7 @@ impl IngressController {
     }
 
     pub async fn run(self, ctx: Context, cfg: Config) -> Result<()> {
-        let mut handle = Handle::new_from_parent(&ctx, None);
+        let (_, mut handle) = Handle::new_from_parent(&ctx, None);
         let (drop_sender, mut drop_receiver) = tokio::sync::mpsc::channel(1);
         let (rebuild_ingress_sender, rebuild_ingress_receiver) = tokio::sync::mpsc::channel(1);
 
@@ -58,7 +61,7 @@ impl IngressController {
             let mut ctx = handle.spawn();
             let tx = rebuild_ingress_sender.clone();
 
-            tokio::spawn(utils::detect_finish(drop_sender.clone(), async move {
+            tokio::spawn(detect_finish(drop_sender.clone(), async move {
                 if let Some(pth) = pth {
                     IngressController::watch_config_reload(ctx, tx, pth)?.await?;
                 } else {
@@ -74,7 +77,7 @@ impl IngressController {
             let mut ctx = handle.spawn();
             let tx = rebuild_ingress_sender.clone();
 
-            tokio::spawn(utils::detect_finish(drop_sender.clone(), async move {
+            tokio::spawn(detect_finish(drop_sender.clone(), async move {
                 if cfg.kubernetes.enabled.unwrap_or_default() {
                     IngressController::watch_k8s(ctx, tx, cfg).await?;
                 } else {
@@ -89,7 +92,7 @@ impl IngressController {
             let ctx = handle.spawn();
             let cfg = cfg.clone();
 
-            tokio::spawn(utils::detect_finish(drop_sender.clone(), async move {
+            tokio::spawn(detect_finish(drop_sender.clone(), async move {
                 router::RouteController::new(cfg, rebuild_ingress_receiver)
                     .serve(ctx)
                     .await
@@ -110,7 +113,7 @@ impl IngressController {
             }
         }
 
-        utils::handle_errors(join!(watch_config, watch_k8s, route_controller).to_vec())
+        handle_errors(join!(watch_config, watch_k8s, route_controller).to_vec())
             .map_err(|err| anyhow!("ingress controller failed: {:?}", err))?;
 
         Ok(())

@@ -3,6 +3,7 @@ use std::time::Duration;
 use anyhow::{anyhow, Result};
 use tokio::{select, sync::mpsc::Receiver};
 use tracing::{error, info};
+use utils::common::debounce_notify;
 use utils::context::wait::Context;
 
 use crate::config::types as config;
@@ -118,7 +119,7 @@ impl RouteController {
                     _ = ctx.done() => {
                         Ok(())
                     }
-                    _ = utils::debounce_notify(debounce_sender, recv, Duration::from_secs(3)) => {
+                    _ = debounce_notify(debounce_sender, recv, Duration::from_secs(3)) => {
                         Err(anyhow!("debounce exited early"))
                     }
                 }

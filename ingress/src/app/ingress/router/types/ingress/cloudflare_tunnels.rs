@@ -24,10 +24,9 @@ impl From<ConfigContainer> for Container {
             paths: container.path.map_or_else(Vec::new, |p| p.into()),
             hostnames: container.hostname.map_or_else(Vec::new, |h| h.into()),
             ingress: Parameters {},
-            upstreams: container.upstreams.map_or_else(
-                Vec::new,
-                |u| u.iter().map(|u| u.to_owned().into()).collect(),
-            ),
+            upstreams: container.upstreams.map_or_else(Vec::new, |u| {
+                u.iter().map(|u| u.to_owned().into()).collect()
+            }),
         }
     }
 }

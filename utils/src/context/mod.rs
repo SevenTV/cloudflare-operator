@@ -364,7 +364,7 @@ mod tests {
 
         tokio::select! {
             _ = ctx.done() => assert!(true),
-            _ = tokio::time::sleep(Duration::from_millis(1)) => assert!(false),
+            _ = tokio::time::sleep(Duration::from_millis(10)) => assert!(false),
         }
     }
 
@@ -375,7 +375,7 @@ mod tests {
 
         tokio::select! {
             _ = ctx.done() => assert!(true),
-            _ = tokio::time::sleep(Duration::from_millis(15)) => assert!(false),
+            _ = tokio::time::sleep(Duration::from_millis(100)) => assert!(false),
         }
     }
 
@@ -390,7 +390,7 @@ mod tests {
         // Cancelling a parent will cancel the child context.
         tokio::select! {
             _ = ctx.done() => assert!(true),
-            _ = tokio::time::sleep(Duration::from_millis(15)) => assert!(false),
+            _ = tokio::time::sleep(Duration::from_millis(10)) => assert!(false),
         }
     }
 
@@ -405,7 +405,7 @@ mod tests {
         // Cancelling a child will not cancel the parent context.
         tokio::select! {
             _ = parent_ctx.done() => assert!(false),
-            _ = async {} => assert!(true),
+            _ = tokio::time::sleep(Duration::from_millis(10)) => assert!(true),
         }
     }
 
@@ -417,7 +417,73 @@ mod tests {
 
         tokio::select! {
             _ = ctx.done() => assert!(true),
-            _ = tokio::time::sleep(Duration::from_millis(7)) => assert!(false),
+            _ = tokio::time::sleep(Duration::from_millis(10)) => assert!(false),
+        }
+    }
+
+    #[tokio::test]
+    async fn child_timeout_cancels_child() {
+        // Note that we can't simply drop the handle here or the context will be cancelled.
+        let (parent_ctx, _parent_handle) = RefContext::new();
+        let (mut ctx, _handle) = Context::with_parent(&parent_ctx, Some(Duration::from_millis(5)));
+
+        tokio::select! {
+            _ = ctx.done() => assert!(true),
+            _ = tokio::time::sleep(Duration::from_millis(10)) => assert!(false),
+        }
+    }
+
+    #[tokio::test]
+    async fn child_timeout_doesnt_cancels_parent() {
+        // Note that we can't simply drop the handle here or the context will be cancelled.
+        let (mut parent_ctx, _parent_handle) = RefContext::new();
+        let (_ctx, _handle) = Context::with_parent(&parent_ctx, Some(Duration::from_millis(5)));
+
+        tokio::select! {
+            _ = parent_ctx.done() => assert!(false),
+            _ = tokio::time::sleep(Duration::from_millis(10)) => assert!(true),
+        }
+    }
+
+    #[tokio::test]
+    async fn ref_context_with_parent() {
+        let (parent_ctx, _parent_handle) = RefContext::new();
+        let (mut ctx, _handle) = RefContext::with_parent(&parent_ctx, None);
+
+        _handle.cancel();
+
+        tokio::select! {
+            _ = ctx.done() => assert!(true),
+            _ = tokio::time::sleep(Duration::from_millis(10)) => assert!(false),
+        }
+    }
+
+    #[tokio::test]
+    async fn test_done_resolves_when_parent_is_done() {
+        let (mut ctx, _handle) = RefContext::new();
+
+        let handle = tokio::spawn(async move {
+            _handle.cancel();
+        });
+
+        tokio::select! {
+            _ = ctx.done() => assert!(true),
+            _ = tokio::time::sleep(Duration::from_millis(10)) => assert!(false),
+        }
+
+        assert!(handle.is_finished())
+    }
+
+    #[tokio::test]
+    async fn test_done_resolves_when_child_is_done() {
+        let (_, mut _handle) = RefContext::new();
+        let mut sibling = _handle.spawn_ref();
+
+        _handle.cancel();
+
+        tokio::select! {
+            _ = sibling.done() => assert!(true),
+            _ = tokio::time::sleep(Duration::from_millis(10)) => assert!(false),
         }
     }
 }
