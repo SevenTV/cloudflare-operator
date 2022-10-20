@@ -176,7 +176,7 @@ mod tests {
             Auth::ApiToken("token".to_string()),
         );
 
-        let (response_send, mut request_recv, server) = setup_client(&mut client, 3100);
+        let (response_send, mut request_recv, server) = setup_client(&mut client, 11000);
 
         select! {
             _ = server => panic!("server should not have exited"),
@@ -195,7 +195,7 @@ mod tests {
 
                 response_send.send(Response::new(Body::from("invalid json"))).await.unwrap();
 
-                assert_eq!(format!("{}", handle.await.unwrap().unwrap_err()), format!("Failed to read response (status code 200 OK) GET http://localhost:3100/: failed to parse json expected value at line 1 column 1"));
+                assert_eq!(format!("{}", handle.await.unwrap().unwrap_err()), format!("Failed to read response (status code 200 OK) GET http://localhost:11000/: failed to parse json expected value at line 1 column 1"));
             } => assert!(true),
         }
     }

@@ -116,7 +116,7 @@ mod tests {
             Auth::ApiToken("token".to_string()),
         );
 
-        let (response_send, mut request_recv, server) = setup_client(&mut client, 3000);
+        let (response_send, mut request_recv, server) = setup_client(&mut client, 10000);
 
         select! {
             _ = server => panic!("server should not have exited"),
@@ -189,7 +189,7 @@ mod tests {
             Auth::ApiToken("token".to_string()),
         );
 
-        let (response_send, mut request_recv, server) = setup_client(&mut client, 3001);
+        let (response_send, mut request_recv, server) = setup_client(&mut client, 10001);
 
         select! {
             _ = server => panic!("server should not have exited"),
@@ -235,7 +235,7 @@ mod tests {
             Auth::ApiToken("token".to_string()),
         );
 
-        let (response_send, mut request_recv, server) = setup_client(&mut client, 3002);
+        let (response_send, mut request_recv, server) = setup_client(&mut client, 10002);
 
         select! {
             _ = server => panic!("server should not have exited"),
@@ -281,7 +281,7 @@ mod tests {
             Auth::ApiToken("token".to_string()),
         );
 
-        let (response_send, mut request_recv, server) = setup_client(&mut client, 3003);
+        let (response_send, mut request_recv, server) = setup_client(&mut client, 10003);
 
         select! {
             _ = server => panic!("server should not have exited"),
@@ -316,7 +316,7 @@ mod tests {
             Auth::ApiToken("token".to_string()),
         );
 
-        let (response_send, mut request_recv, server) = setup_client(&mut client, 3004);
+        let (response_send, mut request_recv, server) = setup_client(&mut client, 10004);
 
         select! {
             _ = server => panic!("server should not have exited"),
@@ -351,7 +351,7 @@ mod tests {
             Auth::ApiToken("token".to_string()),
         );
 
-        let (response_send, mut request_recv, server) = setup_client(&mut client, 3005);
+        let (response_send, mut request_recv, server) = setup_client(&mut client, 10005);
 
         select! {
             _ = server => panic!("server should not have exited"),
@@ -387,7 +387,7 @@ mod tests {
             Auth::ApiToken("token".to_string()),
         );
 
-        let (response_send, mut request_recv, server) = setup_client(&mut client, 3006);
+        let (response_send, mut request_recv, server) = setup_client(&mut client, 10006);
 
         select! {
             _ = server => panic!("server should not have exited"),
@@ -424,7 +424,7 @@ mod tests {
             },
         );
 
-        let (response_send, mut request_recv, server) = setup_client(&mut client, 3007);
+        let (response_send, mut request_recv, server) = setup_client(&mut client, 10007);
 
         select! {
             _ = server => panic!("server should not have exited"),
