@@ -46,7 +46,7 @@ pub(super) async fn resolve_edge_addr(location: &EdgeRegionLocation) -> Result<V
 
         let mut addrs = Vec::new();
 
-        if utils::ip::support_ipv4().await {
+        if utils::ip::support_ipv4().await? {
             let v4_addrs = cloudflare_resolver
                 .ipv4_lookup(&hostname)
                 .await
@@ -57,7 +57,7 @@ pub(super) async fn resolve_edge_addr(location: &EdgeRegionLocation) -> Result<V
                 .for_each(|a| addrs.push(a.to_owned().into()));
         }
 
-        if utils::ip::support_ipv6().await {
+        if utils::ip::support_ipv6().await? {
             let v6_addrs = cloudflare_resolver
                 .ipv6_lookup(&hostname)
                 .await
