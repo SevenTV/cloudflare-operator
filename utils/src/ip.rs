@@ -11,23 +11,19 @@ pub async fn support_ipv6() -> Result<bool> {
 
     let records = records.iter().collect::<Vec<_>>();
     if !records.is_empty() {
-        let conn = tokio::net::TcpSocket::new_v6();
-        if let Ok(conn) = conn {
-            return Ok(conn
-                .connect(std::net::SocketAddr::V6(std::net::SocketAddrV6::new(
-                    records[0].to_owned(),
-                    80,
-                    0,
-                    0,
-                )))
-                .await
-                .is_ok());
-        }
+        let conn = tokio::net::TcpSocket::new_v6()?;
+        Ok(conn
+            .connect(std::net::SocketAddr::V6(std::net::SocketAddrV6::new(
+                records[0].to_owned(),
+                80,
+                0,
+                0,
+            )))
+            .await
+            .is_ok())
     } else {
-        return Err(anyhow!("no ipv6 ips for domain"));
+        Err(anyhow!("no ipv6 ips for domain"))
     }
-
-    Ok(false)
 }
 
 pub async fn support_ipv4() -> Result<bool> {
@@ -37,21 +33,17 @@ pub async fn support_ipv4() -> Result<bool> {
 
     let records = records.iter().collect::<Vec<_>>();
     if !records.is_empty() {
-        let conn = tokio::net::TcpSocket::new_v4();
-        if let Ok(conn) = conn {
-            return Ok(conn
-                .connect(std::net::SocketAddr::V4(std::net::SocketAddrV4::new(
-                    records[0].to_owned(),
-                    80,
-                )))
-                .await
-                .is_ok());
-        }
+        let conn = tokio::net::TcpSocket::new_v4()?;
+        Ok(conn
+            .connect(std::net::SocketAddr::V4(std::net::SocketAddrV4::new(
+                records[0].to_owned(),
+                80,
+            )))
+            .await
+            .is_ok())
     } else {
-        return Err(anyhow!("no ipv4 ips for domain"));
+        Err(anyhow!("no ipv4 ips for domain"))
     }
-
-    Ok(false)
 }
 
 #[cfg(test)]
