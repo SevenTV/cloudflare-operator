@@ -1,7 +1,7 @@
 use std::{collections::HashMap, sync::Arc, time::Duration};
 
 use anyhow::Result;
-use tokio::{select, sync::Mutex};
+use tokio::{select, sync::Mutex, task::JoinHandle};
 use tracing::{error, info};
 use utils::{common::handle_errors, context::wait::Context};
 use uuid::Uuid;
@@ -18,7 +18,7 @@ use self::{
     dns::resolve_edge_addr,
     edge::{EdgeTracker, IpPortHost},
     tunnel::EdgeTunnelClient,
-    types::{EdgeRegionLocation, Protocol, TunnelAuth},
+    types::{EdgeRegionLocation, Protocol, TunnelAuth}, tls::RootCert,
 };
 
 use super::types::HandleHttp;
@@ -64,30 +64,52 @@ impl Supervisor {
         })
     }
 
+    async fn start_helper(&self, ctx: Context, idx: u32, tls: RootCert) -> JoinHandle<Result<()>> {
+        let mut ctx = ctx;
+        let id = self.id;
+        let mut tracker = self.tracker.clone();
+        let auth = self.auth.clone();
+        let handle = self.handle.clone();
+        let protocol = Protocol::Quic;
+
+        tokio::spawn(async move {
+            let ip = tracker.get(&idx).await?;
+
+            loop {
+                select! {
+                    _ = ctx.done() => {
+                        info!("shutting down tunnel {}", id);
+                        break;
+                    }
+                    _ = tokio::time::sleep(Duration::from_secs(1)) => {
+                        let server = EdgeTunnelClient::new(id, idx, auth.clone(), handle.clone());
+                        info!("Starting tunnel server {}", id);
+
+                        let result = server
+                            .serve(ctx.clone(), protocol.clone(), ip.clone(), tls.clone())
+                            .await;
+                        if let Err(e) = result {
+                            error!("tunnel server {} failed: {}", id, e);
+                        } else {
+                            info!("tunnel server {} exited", id);
+                        }
+                    }
+                }
+            }
+
+            tracker.release(&idx).await;
+
+            Ok(())
+        })
+    }
+
     pub async fn start(self, ctx: Context) -> Result<()> {
         let tls = self.tls.lock().await.get(&Protocol::Quic).unwrap().clone(); // todo
 
         let mut handles = Vec::new();
 
         for idx in 0..4 {
-            let ctx = ctx.clone();
-            let auth = self.auth.clone();
-            let tls = tls.clone();
-            let id = self.id;
-            let handle = self.handle.clone();
-            let tracker = self.tracker.clone();
-            let protocol = Protocol::Quic;
-
-            handles.push(tokio::spawn(start_helper(StartHelperArgs {
-                ctx,
-                tracker,
-                protocol,
-                id,
-                idx,
-                tls,
-                auth,
-                handle,
-            })));
+            handles.push(self.start_helper(ctx.clone(), idx, tls.clone()).await);
         }
 
         let handles = {
@@ -103,56 +125,4 @@ impl Supervisor {
 
         Ok(())
     }
-}
-
-struct StartHelperArgs {
-    ctx: Context,
-    tracker: EdgeTracker,
-    protocol: Protocol,
-    id: Uuid,
-    idx: u32,
-    tls: tls::RootCert,
-    auth: TunnelAuth,
-    handle: HandleHttp,
-}
-
-async fn start_helper(args: StartHelperArgs) -> Result<()> {
-    let StartHelperArgs {
-        mut ctx,
-        mut tracker,
-        protocol,
-        id,
-        idx,
-        tls,
-        auth,
-        handle,
-    } = args;
-
-    let ip = tracker.get(&idx).await?;
-
-    loop {
-        select! {
-            _ = ctx.done() => {
-                info!("shutting down tunnel {}", id);
-                break;
-            }
-            _ = tokio::time::sleep(Duration::from_secs(1)) => {
-                let server = EdgeTunnelClient::new(id, idx, auth.clone(), handle.clone());
-                info!("Starting tunnel server {}", id);
-
-                let result = server
-                    .serve(ctx.clone(), protocol.clone(), ip.clone(), tls.clone())
-                    .await;
-                if let Err(e) = result {
-                    error!("tunnel server {} failed: {}", id, e);
-                } else {
-                    info!("tunnel server {} exited", id);
-                }
-            }
-        }
-    }
-
-    tracker.release(&idx).await;
-
-    Ok(())
 }

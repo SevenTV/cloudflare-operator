@@ -81,3 +81,22 @@ pub(super) async fn resolve_edge_addr(location: &EdgeRegionLocation) -> Result<V
 
     Ok(edge_regions)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn test_resolve_edge_addr_auto() {
+        let edge_regions = resolve_edge_addr(&EdgeRegionLocation::AUTO).await;
+        assert!(edge_regions.is_ok());
+        assert!(!edge_regions.unwrap().is_empty());
+    }
+
+    #[tokio::test]
+    async fn test_resolve_edge_addr_us() {
+        let edge_regions = resolve_edge_addr(&EdgeRegionLocation::US).await;
+        assert!(edge_regions.is_ok());
+        assert!(!edge_regions.unwrap().is_empty());
+    }
+}

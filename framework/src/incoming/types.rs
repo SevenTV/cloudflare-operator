@@ -55,14 +55,20 @@ pub trait HttpStream: Send + Sync {
     )>;
 }
 
-#[test]
-fn thread_safe() {
-    // this function basically just exists to make sure the code compiles and that all these types are thread-safe.
-    fn _assert_send_sync<T: Send + Sync>() {}
 
-    _assert_send_sync::<HttpMethod>();
-    _assert_send_sync::<HttpRequest>();
-    _assert_send_sync::<HttpResponse>();
-    _assert_send_sync::<HandleHttp>();
-    _assert_send_sync::<Box<dyn HttpStream>>();
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn thread_safe() {
+        // this function basically just exists to make sure the code compiles and that all these types are thread-safe.
+        fn _assert_send_sync<T: Send + Sync>() {}
+    
+        _assert_send_sync::<HttpMethod>();
+        _assert_send_sync::<HttpRequest>();
+        _assert_send_sync::<HttpResponse>();
+        _assert_send_sync::<HandleHttp>();
+        _assert_send_sync::<Box<dyn HttpStream>>();
+    }
 }

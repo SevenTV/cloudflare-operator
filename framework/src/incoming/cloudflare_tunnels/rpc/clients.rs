@@ -35,11 +35,7 @@ impl RegistrationServerClient {
         let mut req = self.inner.register_connection_request();
         request.to_primitive(req.get());
 
-        info!("Sending register_connection request");
-
         let response = req.send().promise.await?;
-
-        info!("Received register_connection response");
 
         let response = response.get()?;
 

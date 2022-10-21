@@ -140,3 +140,39 @@ pub(super) async fn get_proto_edge_tls_map() -> Result<HashMap<Protocol, RootCer
 
     Ok(map)
 }
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_create_cloudflare_cert_blocks() {
+        let certs = create_cloudflare_cert_blocks();
+        assert!(certs.is_ok());
+
+        let certs = certs.unwrap();
+        assert_eq!(certs.len(), 3);
+    }
+
+    #[tokio::test]
+    async fn test_create_tunnel_tls_config() {
+        let config = create_tunnel_tls_config(Protocol::Quic.tls_settings()).await;
+        assert!(config.is_ok());
+
+        let config = config.unwrap();
+        assert_eq!(config.server_name, "quic.cftunnel.com");
+        assert_eq!(config.config.alpn_protocols.len(), 1);
+        assert_eq!(config.config.alpn_protocols[0], b"argotunnel");
+    }
+
+    #[tokio::test]
+    async fn test_get_proto_edge_tls_map() {
+        let map = get_proto_edge_tls_map().await;
+        assert!(map.is_ok());
+
+        let map = map.unwrap();
+        assert_eq!(map.len(), 1);
+        assert!(map.contains_key(&Protocol::Quic));
+    }
+}

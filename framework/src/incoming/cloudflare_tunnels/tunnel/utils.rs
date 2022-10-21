@@ -108,7 +108,7 @@ async fn serve_control_stream_single_thread(args: ServeControlStreamSingleThread
             .register_connection(RegisterConnectionParams {
                 auth: structs::TunnelAuth {
                     account_tag: auth.account_tag.clone(),
-                    tunnel_secret: auth.tunnel_secret_decode()?,
+                    tunnel_secret: auth.tunnel_secret()?,
                 },
                 tunnel_id: auth.tunnel_id.into_bytes().to_vec(),
                 conn_index: idx,

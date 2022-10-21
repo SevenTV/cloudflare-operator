@@ -74,3 +74,56 @@ impl EdgeTracker {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use std::net::Ipv4Addr;
+
+    use super::*;
+
+    #[tokio::test]
+    async fn test_edge_tracker() {
+        let addr = "1.1.1.1".parse().unwrap();
+        let pool = vec![
+            IpPortHost {
+                ip: addr,
+                port: 1,
+                version: IpVersion::Ipv4,
+                hostname: "test".to_string(),
+            }
+        ];
+
+        let mut tracker = EdgeTracker::new(pool);
+
+        let ip = tracker.get(&1).await;
+        assert!(ip.is_ok());
+        assert_eq!(ip.unwrap().ip, addr);
+
+        let ip = tracker.get(&1).await;
+        assert_eq!(ip.unwrap().ip, addr);
+
+        // try get a new one
+        let ip = tracker.get(&2).await;
+        assert!(ip.is_err());
+
+        tracker.release(&1).await;
+
+        let ip = tracker.get(&2).await;
+        assert!(ip.is_ok());
+        assert_eq!(ip.unwrap().ip, addr);
+    }
+
+    #[test]
+    fn test_ip_port_host_to_sock_addr() {
+        let host = IpPortHost {
+            ip: "1.1.1.1".parse().unwrap(),
+            port: 1,
+            version: IpVersion::Ipv4,
+            hostname: "test".to_string(),
+        };
+
+        let socket = host.to_socket_addr();
+        assert_eq!(socket.ip(), IpAddr::V4(Ipv4Addr::new(1, 1, 1, 1)));
+        assert_eq!(socket.port(), 1);
+    }
+}
