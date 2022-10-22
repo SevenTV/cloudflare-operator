@@ -1,4 +1,4 @@
-use std::{str::FromStr, sync::Arc};
+use std::{str::FromStr, sync::Arc, time::Duration};
 
 use anyhow::{anyhow, Result};
 use async_trait::async_trait;
@@ -69,6 +69,7 @@ pub struct HttpResponse {
 pub trait HttpStream: Send + Sync {
     async fn decompose<'a>(
         &mut self,
+        timeout: Duration,
         resp: Result<HttpResponse>,
     ) -> Result<(
         &mut (dyn AsyncRead + Send + Sync + Unpin),

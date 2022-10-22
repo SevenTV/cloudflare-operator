@@ -1,3 +1,4 @@
+use std::time::Duration;
 use std::{collections::HashMap, sync::Arc};
 
 use anyhow::anyhow;
@@ -125,7 +126,7 @@ impl incoming::HandleHttpTrait for RunningTunnelHandle {
 
                 let mut stream = stream;
 
-                let (_reader, writer) = stream.decompose(Ok(response)).await?;
+                let (_reader, writer) = stream.decompose(Duration::from_secs(1), Ok(response)).await?;
 
                 writer.write_all(format!("{:#?}", req).as_bytes()).await?;
 

@@ -249,8 +249,14 @@ pub async fn serve_stream<
 ) {
     let (send, mut recv) = stream;
 
+    // tokio::time::timeout(duration, f).await
+    
+    
     let result: Result<()> = async move {
-        match determine_protocol(&mut recv).await? {
+        match tokio::time::timeout(
+            Duration::from_secs(2),
+            determine_protocol(&mut recv),
+        ).await?? {
             Protocol::RPCStream => Err(anyhow!("unimplemented")),
             Protocol::DataStream => {
                 let mut buf = [0u8; 2];
@@ -259,11 +265,11 @@ pub async fn serve_stream<
                 let mut recv = tokio_util::compat::TokioAsyncReadCompatExt::compat(recv);
 
                 let request = ConnectRequest::from_primitive(
-                    capnp_futures::serialize::read_message(
+                    tokio::time::timeout(Duration::from_secs(2), capnp_futures::serialize::read_message(
                         &mut recv,
                         capnp::message::ReaderOptions::new(),
-                    )
-                    .await?
+                    ))
+                    .await??
                     .get_root()?,
                 )?;
 
@@ -360,64 +366,68 @@ impl<
 {
     async fn decompose<'a>(
         &mut self,
+        timeout: Duration,
         resp: Result<HttpResponse>,
     ) -> Result<(
         &mut (dyn AsyncRead + Send + Sync + Unpin),
         &mut (dyn AsyncWrite + Send + Sync + Unpin),
     )> {
-        let send = &mut self.send;
-        let recv = &mut self.recv;
-
-        send.write_all(&DATA_STREAM_SIGNATURE).await?;
-        send.write_all(&self.version).await?;
-
-        let mut is_err = false;
-
-        let response = match resp {
-            Ok(resp) => {
-                let mut metadata = Vec::new();
-
-                for (key, val) in resp.headers {
+        let (recv, send) = tokio::time::timeout(timeout, async {
+            let send = &mut self.send;
+            let recv = &mut self.recv;
+            send.write_all(&DATA_STREAM_SIGNATURE).await?;
+            send.write_all(&self.version).await?;
+    
+            let mut is_err = false;
+    
+            let response = match resp {
+                Ok(resp) => {
+                    let mut metadata = Vec::new();
+    
+                    for (key, val) in resp.headers {
+                        metadata.push(Metadata {
+                            key: format!("HttpHeader:{}", key),
+                            val,
+                        });
+                    }
+    
                     metadata.push(Metadata {
-                        key: format!("HttpHeader:{}", key),
-                        val,
+                        key: "HttpStatus".to_string(),
+                        val: format!("{}", resp.status),
                     });
+    
+                    ConnectResponse {
+                        error: "".to_string(),
+                        metadata,
+                    }
                 }
-
-                metadata.push(Metadata {
-                    key: "HttpStatus".to_string(),
-                    val: format!("{}", resp.status),
-                });
-
-                ConnectResponse {
-                    error: "".to_string(),
-                    metadata,
+                Err(e) => {
+                    is_err = true;
+    
+                    ConnectResponse {
+                        error: format!("{:#}", e),
+                        metadata: Vec::new(),
+                    }
                 }
+            };
+    
+            let mut builder = TypedBuilder::<primitives::ConnectResponse::Owned>::new_default();
+            response.to_primitive(builder.init_root());
+    
+            let mut send = tokio_util::compat::TokioAsyncWriteCompatExt::compat_write(send);
+    
+            capnp_futures::serialize::write_message(&mut send, builder.into_inner()).await?;
+    
+            let send = send.into_inner();
+    
+            if is_err {
+                Err(anyhow!("error in response"))
+            } else {
+                Ok((recv, send))
             }
-            Err(e) => {
-                is_err = true;
+        }).await.map_err(|_| anyhow!("decompose timeout"))??;
 
-                ConnectResponse {
-                    error: format!("{:#}", e),
-                    metadata: Vec::new(),
-                }
-            }
-        };
-
-        let mut builder = TypedBuilder::<primitives::ConnectResponse::Owned>::new_default();
-        response.to_primitive(builder.init_root());
-
-        let mut send = tokio_util::compat::TokioAsyncWriteCompatExt::compat_write(send);
-
-        capnp_futures::serialize::write_message(&mut send, builder.into_inner()).await?;
-
-        let send = send.into_inner();
-
-        if is_err {
-            Err(anyhow!("error in response"))
-        } else {
-            Ok((recv, send))
-        }
+        Ok((recv, send))
     }
 }
 
@@ -838,18 +848,15 @@ mod tests {
         };
     }
 
-    #[tokio::test]
-    async fn test_serve_stream() {
-        let (client, mut server) = tokio::io::duplex(64);
-
+    fn setup_serve_stream<T: AsyncRead + AsyncWrite + Sized + Sync + Send + 'static>(client: T) -> (Handle, JoinHandle<()>, (Receiver<(Context, HttpRequest, Box<dyn HttpStream>)>, Sender<(Context, Result<()>)>)) {
         let mut handle = Handle::new();
 
-        let (send_req, mut recv_req) = tokio::sync::mpsc::channel(1);
-        let (send_resp, mut recv_resp) = tokio::sync::mpsc::channel(1);
+        let (send_req, recv_req) = tokio::sync::mpsc::channel(1);
+        let (send_resp, recv_resp) = tokio::sync::mpsc::channel(1);
 
         struct HttpHandle{
             send_req: tokio::sync::mpsc::Sender<(Context, HttpRequest, Box<dyn HttpStream>)>,
-            recv_resp: Arc<Mutex<tokio::sync::mpsc::Receiver<Result<()>>>>,
+            recv_resp: Arc<Mutex<tokio::sync::mpsc::Receiver<(Context, Result<()>)>>>,
         }
 
         #[async_trait]
@@ -861,7 +868,7 @@ mod tests {
                 stream: Box<dyn HttpStream>,
             ) -> Result<()> {
                 self.send_req.send((ctx, req, stream)).await.map_err(|_| anyhow!("send failed"))?;
-                self.recv_resp.lock().await.recv().await.unwrap()
+                self.recv_resp.lock().await.recv().await.unwrap().1
             }
         }
 
@@ -876,6 +883,15 @@ mod tests {
 
             tokio::spawn(serve_stream(ctx, (w, r), Box::new(http_handle)))
         };
+
+        (handle, client_fut, (recv_req, send_resp))
+    }
+
+    #[tokio::test]
+    async fn test_serve_stream() {
+        let (client, mut server) = tokio::io::duplex(64);
+
+        let (handle, client_fut, (mut recv_req, send_resp)) = setup_serve_stream(client);
 
         let version = b"01".to_vec();
 
@@ -945,14 +961,22 @@ mod tests {
             assert_eq!(resp.metadata[0].val, "200");
         });
 
-        let streams = stream.decompose(Ok(resp.clone())).await;
+        let streams = stream.decompose(Duration::from_secs(1), Ok(resp.clone())).await;
         assert!(streams.is_ok());
-        let (mut resp, mut stream) = streams.unwrap();
 
-        tokio::time::sleep(Duration::from_millis(100)).await;
+        tokio::time::sleep(Duration::from_millis(10)).await;
 
         assert!(server.is_finished());
         let server = server.await;
         assert!(server.is_ok());
+
+        send_resp.send((ctx, Ok(()))).await.unwrap();
+
+        tokio::time::sleep(Duration::from_millis(10)).await;
+
+        assert!(client_fut.is_finished());
+        assert!(client_fut.await.is_ok());
+
+        handle.cancel().await;
     }
 }

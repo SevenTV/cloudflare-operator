@@ -1,4 +1,4 @@
-use std::{future::Future, pin::Pin, sync::Arc, time::Duration};
+use std::{future::Future, pin::Pin, sync::Arc, time::Duration, fmt::{Formatter, Debug}};
 
 use super::{Context as TokioContext, Handle as TokioHandle, RefContext};
 
@@ -6,6 +6,13 @@ use super::{Context as TokioContext, Handle as TokioHandle, RefContext};
 pub struct Context {
     ctx: RefContext,
     _owner: Arc<ConextOwner>,
+}
+
+impl Debug for Context {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Context")
+            .finish()
+    }
 }
 
 struct ConextOwner {
@@ -23,6 +30,13 @@ pub struct Handle {
     handle: TokioHandle,
     _owner: Arc<ConextOwner>,
     _receiver: tokio::sync::oneshot::Receiver<()>,
+}
+
+impl Debug for Handle {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Handle")
+            .finish()
+    }
 }
 
 impl Default for Handle {
