@@ -84,14 +84,12 @@ mod tests {
     #[tokio::test]
     async fn test_edge_tracker() {
         let addr = "1.1.1.1".parse().unwrap();
-        let pool = vec![
-            IpPortHost {
-                ip: addr,
-                port: 1,
-                version: IpVersion::Ipv4,
-                hostname: "test".to_string(),
-            }
-        ];
+        let pool = vec![IpPortHost {
+            ip: addr,
+            port: 1,
+            version: IpVersion::Ipv4,
+            hostname: "test".to_string(),
+        }];
 
         let mut tracker = EdgeTracker::new(pool);
 

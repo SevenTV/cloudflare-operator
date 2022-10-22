@@ -17,8 +17,9 @@ pub mod types;
 use self::{
     dns::resolve_edge_addr,
     edge::{EdgeTracker, IpPortHost},
+    tls::RootCert,
     tunnel::EdgeTunnelClient,
-    types::{EdgeRegionLocation, Protocol, TunnelAuth}, tls::RootCert,
+    types::{EdgeRegionLocation, Protocol, TunnelAuth},
 };
 
 use super::types::HandleHttp;

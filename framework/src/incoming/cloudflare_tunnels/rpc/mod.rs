@@ -1,23 +1,15 @@
-use capnp_rpc::{
-    twoparty::{self, VatId},
-    RpcSystem, VatNetwork,
-};
-use quinn::{RecvStream, SendStream};
-
-use self::clients::{RegistrationServerClient, TunnelServerClient};
-
-pub mod clients;
+use capnp_rpc::{twoparty::VatId, RpcSystem, VatNetwork};
+use generated::capnp::tunnelrpc::interfaces::tunnel_server;
 
 pub(crate) struct ControlStreamManager {
-    tunnel_server: TunnelServerClient,
+    tunnel_server: tunnel_server::client::Client,
 }
 
 impl ControlStreamManager {
     pub fn new(network: Box<dyn VatNetwork<VatId>>) -> (Self, RpcSystem<VatId>) {
         let mut rpc_system = RpcSystem::new(network, None);
 
-        let rclient = RegistrationServerClient::new_from_system(&mut rpc_system);
-        let tclient = TunnelServerClient::new_from_system(&mut rpc_system, rclient);
+        let tclient = tunnel_server::client::Client::new_from_system(&mut rpc_system);
 
         (
             Self {
@@ -27,16 +19,7 @@ impl ControlStreamManager {
         )
     }
 
-    pub fn get_tunnel_client(&self) -> &TunnelServerClient {
+    pub fn get_tunnel_client(&self) -> &tunnel_server::client::Client {
         &self.tunnel_server
     }
-}
-
-pub(crate) fn new_network(send: SendStream, recv: RecvStream) -> Box<dyn VatNetwork<VatId>> {
-    Box::new(twoparty::VatNetwork::new(
-        recv,
-        send,
-        VatId::Client,
-        Default::default(),
-    ))
 }

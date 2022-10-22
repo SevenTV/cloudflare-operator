@@ -1,4 +1,5 @@
 pub mod quic_metadata_protocol;
+pub mod rpc;
 pub mod tunnelrpc;
 
 pub mod raw {

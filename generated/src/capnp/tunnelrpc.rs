@@ -61,7 +61,7 @@ pub mod structs {
     use super::primitives;
     use anyhow::Result;
 
-    #[derive(Clone, Debug, PartialEq, Eq)]
+    #[derive(Default, Clone, Debug, PartialEq, Eq)]
     pub struct Authentication {
         pub key: String,
         pub email: String,
@@ -86,7 +86,7 @@ pub mod structs {
         }
     }
 
-    #[derive(Clone, Debug, PartialEq, Eq)]
+    #[derive(Default, Clone, Debug, PartialEq, Eq)]
     pub struct TunnelRegistration {
         pub err: String,
         pub url: String,
@@ -151,6 +151,27 @@ pub mod structs {
         pub features: Vec<String>,
     }
 
+    impl Default for RegistrationOptions {
+        fn default() -> Self {
+            Self {
+                client_id: String::new(),
+                version: String::new(),
+                os: String::new(),
+                existing_tunnel_policy: primitives::ExistingTunnelPolicy::Ignore,
+                pool_name: String::new(),
+                tags: Vec::new(),
+                connection_id: 0,
+                origin_local_ip: String::new(),
+                is_autoupdated: false,
+                run_from_terminal: false,
+                compression_quality: 0,
+                uuid: String::new(),
+                num_previous_attempts: 0,
+                features: Vec::new(),
+            }
+        }
+    }
+
     impl RegistrationOptions {
         pub fn to_primitive(&self, builder: primitives::RegistrationOptions::Builder) {
             let mut builder = builder;
@@ -204,7 +225,7 @@ pub mod structs {
         }
     }
 
-    #[derive(Clone, Debug, PartialEq, Eq)]
+    #[derive(Default, Clone, Debug, PartialEq, Eq)]
     pub struct Tag {
         pub name: String,
         pub value: String,
@@ -226,7 +247,7 @@ pub mod structs {
         }
     }
 
-    #[derive(Clone, Debug, PartialEq, Eq)]
+    #[derive(Default, Clone, Debug, PartialEq, Eq)]
     pub struct ServerInfo {
         pub location_name: String,
     }
@@ -245,7 +266,7 @@ pub mod structs {
         }
     }
 
-    #[derive(Clone, Debug, PartialEq, Eq)]
+    #[derive(Default, Clone, Debug, PartialEq, Eq)]
     pub struct AuthenticationResponse {
         pub permanent_err: String,
         pub retryable_err: String,
@@ -275,7 +296,7 @@ pub mod structs {
         }
     }
 
-    #[derive(Clone, Debug, PartialEq, Eq)]
+    #[derive(Default, Clone, Debug, PartialEq, Eq)]
     pub struct ClientInfo {
         pub client_id: Vec<u8>,
         pub features: Vec<String>,
@@ -306,7 +327,7 @@ pub mod structs {
         }
     }
 
-    #[derive(Clone, Debug, PartialEq, Eq)]
+    #[derive(Default, Clone, Debug, PartialEq, Eq)]
     pub struct ConnectionOptions {
         pub client: ClientInfo,
         pub origin_local_ip: Vec<u8>,
@@ -384,7 +405,7 @@ pub mod structs {
         Error(ConnectionError),
     }
 
-    #[derive(Clone, Debug, PartialEq, Eq)]
+    #[derive(Default, Clone, Debug, PartialEq, Eq)]
     pub struct ConnectionDetails {
         pub uuid: Vec<u8>,
         pub location_name: String,
@@ -409,7 +430,7 @@ pub mod structs {
         }
     }
 
-    #[derive(Clone, Debug, PartialEq, Eq)]
+    #[derive(Default, Clone, Debug, PartialEq, Eq)]
     pub struct ConnectionError {
         pub cause: String,
         pub retry_after: i64, // in nanoseconds
@@ -434,7 +455,7 @@ pub mod structs {
         }
     }
 
-    #[derive(Clone, Debug, PartialEq, Eq)]
+    #[derive(Default, Clone, Debug, PartialEq, Eq)]
     pub struct TunnelAuth {
         pub account_tag: String,
         pub tunnel_secret: Vec<u8>,
@@ -456,7 +477,7 @@ pub mod structs {
         }
     }
 
-    #[derive(Clone, Debug, PartialEq, Eq)]
+    #[derive(Default, Clone, Debug, PartialEq, Eq)]
     pub struct RegisterUdpSessionResponse {
         pub err: String,
         pub spans: Vec<u8>,
@@ -480,7 +501,7 @@ pub mod structs {
         }
     }
 
-    #[derive(Clone, Debug, PartialEq, Eq)]
+    #[derive(Default, Clone, Debug, PartialEq, Eq)]
     pub struct UpdateConfigurationResponse {
         pub latest_applied_version: i32,
         pub err: String,
@@ -836,11 +857,16 @@ pub mod interfaces {
     pub mod registration_server {
         #![allow(dead_code, unused_variables, unused_mut)]
 
+        use crate::capnp::raw::tunnelrpc_capnp;
+        use async_trait::async_trait;
+        use capnp::capability::Promise;
+        use capnp_rpc::{twoparty::VatId, RpcSystem};
+
         use super::primitives;
         use super::structs::*;
         use anyhow::Result;
 
-        #[derive(Clone, Debug, PartialEq, Eq)]
+        #[derive(Default, Clone, Debug, PartialEq, Eq)]
         pub struct RegisterConnectionParams {
             pub auth: TunnelAuth,
             pub tunnel_id: Vec<u8>,
@@ -890,7 +916,7 @@ pub mod interfaces {
                 })
             }
         }
-        #[derive(Clone, Debug, PartialEq, Eq)]
+        #[derive(Default, Clone, Debug, PartialEq, Eq)]
         pub struct UnregisterConnectionParams {}
 
         impl UnregisterConnectionParams {
@@ -905,7 +931,7 @@ pub mod interfaces {
             }
         }
 
-        #[derive(Clone, Debug, PartialEq, Eq)]
+        #[derive(Default, Clone, Debug, PartialEq, Eq)]
         pub struct UnregisterConnectionResults {}
 
         impl UnregisterConnectionResults {
@@ -920,7 +946,7 @@ pub mod interfaces {
             }
         }
 
-        #[derive(Clone, Debug, PartialEq, Eq)]
+        #[derive(Default, Clone, Debug, PartialEq, Eq)]
         pub struct UpdateLocalConfigurationParams {
             pub config: Vec<u8>,
         }
@@ -944,7 +970,7 @@ pub mod interfaces {
             }
         }
 
-        #[derive(Clone, Debug, PartialEq, Eq)]
+        #[derive(Default, Clone, Debug, PartialEq, Eq)]
         pub struct UpdateLocalConfigurationResults {}
 
         impl UpdateLocalConfigurationResults {
@@ -962,8 +988,133 @@ pub mod interfaces {
             }
         }
 
+        pub mod client {
+            use super::*;
+
+            #[derive(Clone)]
+            pub struct Client {
+                inner: tunnelrpc_capnp::registration_server::Client,
+            }
+
+            impl Client {
+                pub fn new(inner: tunnelrpc_capnp::registration_server::Client) -> Self {
+                    Self { inner }
+                }
+
+                pub fn new_from_system(system: &mut RpcSystem<VatId>) -> Self {
+                    Self::new(system.bootstrap(VatId::Server))
+                }
+
+                pub async fn register_connection(
+                    &self,
+                    request: RegisterConnectionParams,
+                ) -> Result<RegisterConnectionResults> {
+                    let mut req = self.inner.register_connection_request();
+                    request.to_primitive(req.get());
+
+                    let response = req.send().promise.await?;
+
+                    let response = response.get()?;
+
+                    RegisterConnectionResults::from_primitive(response)
+                }
+
+                pub async fn unregister_connection(
+                    &self,
+                    request: UnregisterConnectionParams,
+                ) -> Result<UnregisterConnectionResults> {
+                    let mut req = self.inner.unregister_connection_request();
+                    request.to_primitive(req.get());
+
+                    let response = req.send().promise.await?;
+                    let response = response.get()?;
+
+                    UnregisterConnectionResults::from_primitive(response)
+                }
+
+                pub async fn update_local_configuration(
+                    &self,
+                    request: UpdateLocalConfigurationParams,
+                ) -> Result<UpdateLocalConfigurationResults> {
+                    let mut req = self.inner.update_local_configuration_request();
+                    request.to_primitive(req.get());
+
+                    let response = req.send().promise.await?;
+                    let response = response.get()?;
+
+                    UpdateLocalConfigurationResults::from_primitive(response)
+                }
+            }
+        }
+
+        pub mod server {
+            use crate::capnp::rpc::{server_async_wrapper, ServerFactory};
+
+            use super::*;
+
+            #[async_trait]
+            pub trait Client: Send + Sync {
+                async fn register_connection(
+                    &self,
+                    request: RegisterConnectionParams,
+                ) -> Result<RegisterConnectionResults, capnp::Error> {
+                    Err(capnp::Error::unimplemented("unimplemented".to_string()))
+                }
+
+                async fn unregister_connection(
+                    &self,
+                    request: UnregisterConnectionParams,
+                ) -> Result<UnregisterConnectionResults, capnp::Error> {
+                    Err(capnp::Error::unimplemented("unimplemented".to_string()))
+                }
+
+                async fn update_local_configuration(
+                    &self,
+                    request: UpdateLocalConfigurationParams,
+                ) -> Result<UpdateLocalConfigurationResults, capnp::Error> {
+                    Err(capnp::Error::unimplemented("unimplemented".to_string()))
+                }
+            }
+
+            impl<T: Client + Clone + 'static> tunnelrpc_capnp::registration_server::Server
+                for Box<dyn ServerFactory<T>>
+            {
+                fn register_connection(
+                    &mut self,
+                    params: tunnelrpc_capnp::registration_server::RegisterConnectionParams,
+                    mut results: tunnelrpc_capnp::registration_server::RegisterConnectionResults,
+                ) -> Promise<(), ::capnp::Error> {
+                    server_async_wrapper!(RegisterConnectionParams, register_connection [self, params, results]);
+                }
+
+                fn unregister_connection(
+                    &mut self,
+                    params: tunnelrpc_capnp::registration_server::UnregisterConnectionParams,
+                    mut results: tunnelrpc_capnp::registration_server::UnregisterConnectionResults,
+                ) -> Promise<(), ::capnp::Error> {
+                    server_async_wrapper!(UnregisterConnectionParams, unregister_connection [self, params, results]);
+                }
+
+                fn update_local_configuration(
+                    &mut self,
+                    params: tunnelrpc_capnp::registration_server::UpdateLocalConfigurationParams,
+                    mut results: tunnelrpc_capnp::registration_server::UpdateLocalConfigurationResults,
+                ) -> Promise<(), ::capnp::Error> {
+                    server_async_wrapper!(UpdateLocalConfigurationParams, update_local_configuration [self, params, results]);
+                }
+            }
+        }
+
         #[cfg(test)]
         mod tests {
+            use std::sync::Arc;
+
+            use tokio::sync::Mutex;
+
+            use crate::capnp::rpc::tests::setup_mock_networks;
+            use crate::capnp::rpc::ServerFactory;
+            use crate::capnp::tunnelrpc::structs;
+
             use super::*;
 
             #[test]
@@ -1100,6 +1251,343 @@ pub mod interfaces {
                     update_local_configuration_results2
                 );
             }
+
+            #[derive(Clone)]
+            struct RegistrationServer<P, R> {
+                send: tokio::sync::mpsc::Sender<P>,
+                recv: Arc<Mutex<tokio::sync::mpsc::Receiver<Result<R, capnp::Error>>>>,
+            }
+
+            #[tokio::test]
+            async fn test_client_server_register_connection() {
+                tokio::task::LocalSet::new()
+                    .run_until(async {
+                        let (client_network, server_network) = setup_mock_networks().await;
+                        let mut system = RpcSystem::new(client_network, None);
+                        let client = client::Client::new_from_system(&mut system);
+                        let client_runner = tokio::task::spawn_local(system);
+
+                        type Server =
+                            RegistrationServer<RegisterConnectionParams, RegisterConnectionResults>;
+
+                        #[async_trait]
+                        impl server::Client for Server {
+                            async fn register_connection(
+                                &self,
+                                params: RegisterConnectionParams,
+                            ) -> Result<RegisterConnectionResults, capnp::Error>
+                            {
+                                self.send.send(params).await.unwrap();
+                                self.recv.lock().await.recv().await.unwrap()
+                            }
+                        }
+
+                        let (send_params, mut recv_params) = tokio::sync::mpsc::channel(1);
+                        let (send_results, recv_results) = tokio::sync::mpsc::channel(1);
+                        let server_factory: tunnelrpc_capnp::registration_server::Client =
+                            capnp_rpc::new_client(Box::<dyn ServerFactory<Server>>::from(Server {
+                                send: send_params,
+                                recv: Arc::new(Mutex::new(recv_results)),
+                            }));
+                        let mut system =
+                            RpcSystem::new(server_network, Some(server_factory.client));
+                        let server_runner = tokio::task::spawn_local(system);
+
+                        let params = RegisterConnectionParams {
+                            auth: structs::TunnelAuth {
+                                account_tag: "account_tag".to_string(),
+                                tunnel_secret: "tunnel_secret".to_string().into_bytes(),
+                            },
+                            conn_index: 0,
+                            tunnel_id: "tunnel_id".to_string().into_bytes(),
+                            options: structs::ConnectionOptions {
+                                replace_existing: true,
+                                compression_quality: 3,
+                                num_previous_attempts: 5,
+                                client: structs::ClientInfo {
+                                    arch: "arch".to_string(),
+                                    version: "version".to_string(),
+                                    client_id: "client_id".to_string().into_bytes(),
+                                    features: vec!["feature".to_string()],
+                                },
+                                origin_local_ip: "origin_local_ip".to_string().into_bytes(),
+                            },
+                        };
+
+                        let result = RegisterConnectionResults {
+                            result: structs::ConnectionResponse {
+                                result: structs::ConnectionResponseResult::ConnectionDetails(
+                                    structs::ConnectionDetails {
+                                        location_name: "location_name".to_string(),
+                                        tunnel_is_remotely_managed: true,
+                                        uuid: uuid::Uuid::new_v4().into_bytes().to_vec(),
+                                    },
+                                ),
+                            },
+                        };
+
+                        let h = {
+                            let params = params.clone();
+                            let result = result.clone();
+                            let send_results = send_results.clone();
+                            tokio::spawn(async move {
+                                assert_eq!(recv_params.recv().await.unwrap(), params);
+                                send_results.send(Ok(result)).await.unwrap();
+                                recv_params
+                            })
+                        };
+
+                        let resp = client.register_connection(params).await;
+                        assert!(resp.is_ok());
+                        assert_eq!(resp.unwrap(), result);
+                        assert!(h.is_finished());
+
+                        let h = h.await;
+                        assert!(h.is_ok());
+
+                        let mut recv_params = h.unwrap();
+
+                        let h = {
+                            let send_results = send_results.clone();
+                            tokio::spawn(async move {
+                                assert_eq!(recv_params.recv().await.unwrap(), Default::default());
+                                send_results
+                                    .send(Err(capnp::Error::failed(
+                                        "failure is tested for".to_string(),
+                                    )))
+                                    .await
+                                    .unwrap();
+                                recv_params
+                            })
+                        };
+
+                        let resp = client.register_connection(Default::default()).await;
+                        assert!(resp.is_err());
+                        assert_eq!(
+                            resp.unwrap_err().to_string(),
+                            "Failed: remote exception: failure is tested for"
+                        );
+                        assert!(h.is_finished());
+                    })
+                    .await;
+            }
+
+            #[tokio::test]
+            async fn test_client_server_unregister_connection() {
+                tokio::task::LocalSet::new()
+                    .run_until(async {
+                        let (client_network, server_network) = setup_mock_networks().await;
+                        let mut system = RpcSystem::new(client_network, None);
+                        let client = client::Client::new_from_system(&mut system);
+                        let client_runner = tokio::task::spawn_local(system);
+
+                        type Server = RegistrationServer<
+                            UnregisterConnectionParams,
+                            UnregisterConnectionResults,
+                        >;
+
+                        #[async_trait]
+                        impl server::Client for Server {
+                            async fn unregister_connection(
+                                &self,
+                                params: UnregisterConnectionParams,
+                            ) -> Result<UnregisterConnectionResults, capnp::Error>
+                            {
+                                self.send.send(params).await.unwrap();
+                                self.recv.lock().await.recv().await.unwrap()
+                            }
+                        }
+
+                        let (send_params, mut recv_params) = tokio::sync::mpsc::channel(1);
+                        let (send_results, recv_results) = tokio::sync::mpsc::channel(1);
+                        let server_factory: tunnelrpc_capnp::registration_server::Client =
+                            capnp_rpc::new_client(Box::<dyn ServerFactory<Server>>::from(Server {
+                                send: send_params,
+                                recv: Arc::new(Mutex::new(recv_results)),
+                            }));
+                        let mut system =
+                            RpcSystem::new(server_network, Some(server_factory.client));
+                        let server_runner = tokio::task::spawn_local(system);
+
+                        let h = {
+                            let send_results = send_results.clone();
+                            tokio::spawn(async move {
+                                assert_eq!(recv_params.recv().await.unwrap(), Default::default());
+                                send_results
+                                    .send(Ok(UnregisterConnectionResults::default()))
+                                    .await
+                                    .unwrap();
+                                recv_params
+                            })
+                        };
+
+                        let resp = client.unregister_connection(Default::default()).await;
+                        assert!(resp.is_ok());
+                        assert_eq!(resp.unwrap(), Default::default());
+                        assert!(h.is_finished());
+
+                        let h = h.await;
+                        assert!(h.is_ok());
+
+                        let mut recv_params = h.unwrap();
+
+                        let h = {
+                            let send_results = send_results.clone();
+                            tokio::spawn(async move {
+                                assert_eq!(recv_params.recv().await.unwrap(), Default::default());
+                                send_results
+                                    .send(Err(capnp::Error::failed(
+                                        "failure is tested for".to_string(),
+                                    )))
+                                    .await
+                                    .unwrap();
+                                recv_params
+                            })
+                        };
+
+                        let resp = client.unregister_connection(Default::default()).await;
+                        assert!(resp.is_err());
+                        assert_eq!(
+                            resp.unwrap_err().to_string(),
+                            "Failed: remote exception: failure is tested for"
+                        );
+                        assert!(h.is_finished());
+                    })
+                    .await;
+            }
+
+            #[tokio::test]
+            async fn test_client_server_update_local_configuration() {
+                tokio::task::LocalSet::new()
+                    .run_until(async {
+                        let (client_network, server_network) = setup_mock_networks().await;
+                        let mut system = RpcSystem::new(client_network, None);
+                        let client = client::Client::new_from_system(&mut system);
+                        let client_runner = tokio::task::spawn_local(system);
+
+                        type Server = RegistrationServer<
+                            UpdateLocalConfigurationParams,
+                            UpdateLocalConfigurationResults,
+                        >;
+
+                        #[async_trait]
+                        impl server::Client for Server {
+                            async fn update_local_configuration(
+                                &self,
+                                params: UpdateLocalConfigurationParams,
+                            ) -> Result<UpdateLocalConfigurationResults, capnp::Error>
+                            {
+                                self.send.send(params).await.unwrap();
+                                self.recv.lock().await.recv().await.unwrap()
+                            }
+                        }
+
+                        let (send_params, mut recv_params) = tokio::sync::mpsc::channel(1);
+                        let (send_results, recv_results) = tokio::sync::mpsc::channel(1);
+                        let server_factory: tunnelrpc_capnp::registration_server::Client =
+                            capnp_rpc::new_client(Box::<dyn ServerFactory<Server>>::from(Server {
+                                send: send_params,
+                                recv: Arc::new(Mutex::new(recv_results)),
+                            }));
+                        let mut system =
+                            RpcSystem::new(server_network, Some(server_factory.client));
+                        let server_runner = tokio::task::spawn_local(system);
+
+                        let params = UpdateLocalConfigurationParams {
+                            config: "config".to_string().into_bytes(),
+                        };
+
+                        let h = {
+                            let send_results = send_results.clone();
+                            let params = params.clone();
+                            tokio::spawn(async move {
+                                assert_eq!(recv_params.recv().await.unwrap(), params.clone());
+                                send_results.send(Ok(Default::default())).await.unwrap();
+                                recv_params
+                            })
+                        };
+
+                        let resp = client.update_local_configuration(params.clone()).await;
+                        assert!(resp.is_ok());
+                        assert_eq!(resp.unwrap(), Default::default());
+
+                        let h = h.await;
+                        assert!(h.is_ok());
+
+                        let mut recv_params = h.unwrap();
+
+                        let h = {
+                            let send_results = send_results.clone();
+                            let params = params.clone();
+                            tokio::spawn(async move {
+                                assert_eq!(recv_params.recv().await.unwrap(), params.clone());
+                                send_results
+                                    .send(Err(capnp::Error::failed(
+                                        "failure is tested for".to_string(),
+                                    )))
+                                    .await
+                                    .unwrap();
+                                recv_params
+                            })
+                        };
+
+                        let resp = client.update_local_configuration(params).await;
+                        assert!(resp.is_err());
+                        assert_eq!(
+                            resp.unwrap_err().to_string(),
+                            "Failed: remote exception: failure is tested for"
+                        );
+                        assert!(h.is_finished());
+                    })
+                    .await;
+            }
+
+            #[tokio::test]
+            async fn test_client_server_unimplemented() {
+                tokio::task::LocalSet::new()
+                    .run_until(async {
+                        let (client_network, server_network) = setup_mock_networks().await;
+                        let mut system = RpcSystem::new(client_network, None);
+                        let client = client::Client::new_from_system(&mut system);
+                        let client_runner = tokio::task::spawn_local(system);
+
+                        #[derive(Clone)]
+                        struct Server {}
+
+                        #[async_trait]
+                        impl server::Client for Server {}
+
+                        let server_factory: tunnelrpc_capnp::registration_server::Client =
+                            capnp_rpc::new_client(Box::<dyn ServerFactory<Server>>::from(
+                                Server {},
+                            ));
+                        let mut system =
+                            RpcSystem::new(server_network, Some(server_factory.client));
+                        let server_runner = tokio::task::spawn_local(system);
+
+                        let resp = client.register_connection(Default::default()).await;
+                        assert!(resp.is_err());
+                        assert_eq!(
+                            resp.unwrap_err().to_string(),
+                            "Unimplemented: remote exception: unimplemented"
+                        );
+
+                        let resp = client.unregister_connection(Default::default()).await;
+                        assert!(resp.is_err());
+                        assert_eq!(
+                            resp.unwrap_err().to_string(),
+                            "Unimplemented: remote exception: unimplemented"
+                        );
+
+                        let resp = client.update_local_configuration(Default::default()).await;
+                        assert!(resp.is_err());
+                        assert_eq!(
+                            resp.unwrap_err().to_string(),
+                            "Unimplemented: remote exception: unimplemented"
+                        );
+                    })
+                    .await;
+            }
         }
     }
 
@@ -1110,7 +1598,12 @@ pub mod interfaces {
         use super::structs::*;
         use anyhow::Result;
 
-        #[derive(Clone, Debug, PartialEq, Eq)]
+        use crate::capnp::{raw::tunnelrpc_capnp, tunnelrpc::interfaces::registration_server};
+        use async_trait::async_trait;
+        use capnp::capability::Promise;
+        use capnp_rpc::{twoparty::VatId, RpcSystem};
+
+        #[derive(Default, Clone, Debug, PartialEq, Eq)]
         pub struct RegisterTunnelParams {
             pub origin_cert: Vec<u8>,
             pub hostname: String,
@@ -1137,7 +1630,7 @@ pub mod interfaces {
             }
         }
 
-        #[derive(Clone, Debug, PartialEq, Eq)]
+        #[derive(Default, Clone, Debug, PartialEq, Eq)]
         pub struct RegisterTunnelResults {
             pub result: TunnelRegistration,
         }
@@ -1158,7 +1651,7 @@ pub mod interfaces {
             }
         }
 
-        #[derive(Clone, Debug, PartialEq, Eq)]
+        #[derive(Default, Clone, Debug, PartialEq, Eq)]
         pub struct GetServerInfoParams {}
 
         impl GetServerInfoParams {
@@ -1173,7 +1666,7 @@ pub mod interfaces {
             }
         }
 
-        #[derive(Clone, Debug, PartialEq, Eq)]
+        #[derive(Default, Clone, Debug, PartialEq, Eq)]
         pub struct GetServerInfoResults {
             pub result: ServerInfo,
         }
@@ -1194,7 +1687,7 @@ pub mod interfaces {
             }
         }
 
-        #[derive(Clone, Debug, PartialEq, Eq)]
+        #[derive(Default, Clone, Debug, PartialEq, Eq)]
         pub struct UnregisterTunnelParams {
             pub grace_period_nano_sec: i64,
         }
@@ -1215,7 +1708,7 @@ pub mod interfaces {
             }
         }
 
-        #[derive(Clone, Debug, PartialEq, Eq)]
+        #[derive(Default, Clone, Debug, PartialEq, Eq)]
         pub struct UnregisterTunnelResults {}
 
         impl UnregisterTunnelResults {
@@ -1230,7 +1723,7 @@ pub mod interfaces {
             }
         }
 
-        #[derive(Clone, Debug, PartialEq, Eq)]
+        #[derive(Default, Clone, Debug, PartialEq, Eq)]
         pub struct ObsoleteDeclarativeTunnelConnectParams {}
 
         impl ObsoleteDeclarativeTunnelConnectParams {
@@ -1248,8 +1741,7 @@ pub mod interfaces {
             }
         }
 
-        #[derive(Clone, Debug, PartialEq, Eq)]
-
+        #[derive(Default, Clone, Debug, PartialEq, Eq)]
         pub struct ObsoleteDeclarativeTunnelConnectResults {}
 
         impl ObsoleteDeclarativeTunnelConnectResults {
@@ -1267,7 +1759,7 @@ pub mod interfaces {
             }
         }
 
-        #[derive(Clone, Debug, PartialEq, Eq)]
+        #[derive(Default, Clone, Debug, PartialEq, Eq)]
         pub struct AuthenticateParams {
             pub origin_cert: Vec<u8>,
             pub hostname: String,
@@ -1294,7 +1786,7 @@ pub mod interfaces {
             }
         }
 
-        #[derive(Clone, Debug, PartialEq, Eq)]
+        #[derive(Default, Clone, Debug, PartialEq, Eq)]
         pub struct AuthenticateResults {
             pub result: AuthenticationResponse,
         }
@@ -1315,7 +1807,7 @@ pub mod interfaces {
             }
         }
 
-        #[derive(Clone, Debug, PartialEq, Eq)]
+        #[derive(Default, Clone, Debug, PartialEq, Eq)]
         pub struct ReconnectTunnelParams {
             pub jwt: Vec<u8>,
             pub event_digest: Vec<u8>,
@@ -1348,7 +1840,7 @@ pub mod interfaces {
             }
         }
 
-        #[derive(Clone, Debug, PartialEq, Eq)]
+        #[derive(Default, Clone, Debug, PartialEq, Eq)]
         pub struct ReconnectTunnelResults {
             pub result: TunnelRegistration,
         }
@@ -1369,7 +1861,225 @@ pub mod interfaces {
             }
         }
 
+        pub mod client {
+            use super::*;
+
+            #[derive(Clone)]
+            pub struct Client {
+                inner: tunnelrpc_capnp::tunnel_server::Client,
+                registration: registration_server::client::Client,
+            }
+
+            impl Client {
+                pub fn new(
+                    inner: tunnelrpc_capnp::tunnel_server::Client,
+                    registration: registration_server::client::Client,
+                ) -> Self {
+                    Self {
+                        inner,
+                        registration,
+                    }
+                }
+
+                pub fn new_from_system(system: &mut RpcSystem<VatId>) -> Self {
+                    Self::new(
+                        system.bootstrap(VatId::Server),
+                        registration_server::client::Client::new(system.bootstrap(VatId::Server)),
+                    )
+                }
+
+                pub fn get_registration_client(&self) -> &registration_server::client::Client {
+                    &self.registration
+                }
+
+                pub async fn register_tunnel(
+                    &self,
+                    request: RegisterTunnelParams,
+                ) -> Result<RegisterTunnelResults> {
+                    let mut req = self.inner.register_tunnel_request();
+                    request.to_primitive(req.get());
+
+                    let response = req.send().promise.await?;
+                    let response = response.get()?;
+
+                    RegisterTunnelResults::from_primitive(response)
+                }
+
+                pub async fn get_server_info(
+                    &self,
+                    request: GetServerInfoParams,
+                ) -> Result<GetServerInfoResults> {
+                    let mut req = self.inner.get_server_info_request();
+                    request.to_primitive(req.get());
+
+                    let response = req.send().promise.await?;
+                    let response = response.get()?;
+
+                    GetServerInfoResults::from_primitive(response)
+                }
+
+                pub async fn unregister_tunnel(
+                    &self,
+                    request: UnregisterTunnelParams,
+                ) -> Result<UnregisterTunnelResults> {
+                    let mut req = self.inner.unregister_tunnel_request();
+                    request.to_primitive(req.get());
+
+                    let response = req.send().promise.await?;
+                    let response = response.get()?;
+
+                    UnregisterTunnelResults::from_primitive(response)
+                }
+
+                pub async fn obsolete_declarative_tunnel_connect(
+                    &self,
+                    request: ObsoleteDeclarativeTunnelConnectParams,
+                ) -> Result<ObsoleteDeclarativeTunnelConnectResults> {
+                    let mut req = self.inner.obsolete_declarative_tunnel_connect_request();
+                    request.to_primitive(req.get());
+
+                    let response = req.send().promise.await?;
+                    let response = response.get()?;
+
+                    ObsoleteDeclarativeTunnelConnectResults::from_primitive(response)
+                }
+
+                pub async fn authenticate(
+                    &self,
+                    request: AuthenticateParams,
+                ) -> Result<AuthenticateResults> {
+                    let mut req = self.inner.authenticate_request();
+                    request.to_primitive(req.get());
+
+                    let response = req.send().promise.await?;
+                    let response = response.get()?;
+
+                    AuthenticateResults::from_primitive(response)
+                }
+
+                pub async fn reconnect_tunnel(
+                    &self,
+                    request: ReconnectTunnelParams,
+                ) -> Result<ReconnectTunnelResults> {
+                    let mut req = self.inner.reconnect_tunnel_request();
+                    request.to_primitive(req.get());
+
+                    let response = req.send().promise.await?;
+                    let response = response.get()?;
+
+                    ReconnectTunnelResults::from_primitive(response)
+                }
+            }
+        }
+
+        pub mod server {
+            use crate::capnp::rpc::{server_async_wrapper, ServerFactory};
+
+            use super::*;
+
+            #[async_trait]
+            pub trait Client: Send + Sync {
+                async fn register_tunnel(
+                    &self,
+                    request: RegisterTunnelParams,
+                ) -> Result<RegisterTunnelResults, capnp::Error> {
+                    Err(capnp::Error::unimplemented("unimplemented".to_string()))
+                }
+
+                async fn get_server_info(
+                    &self,
+                    request: GetServerInfoParams,
+                ) -> Result<GetServerInfoResults, capnp::Error> {
+                    Err(capnp::Error::unimplemented("unimplemented".to_string()))
+                }
+
+                async fn unregister_tunnel(
+                    &self,
+                    request: UnregisterTunnelParams,
+                ) -> Result<UnregisterTunnelResults, capnp::Error> {
+                    Err(capnp::Error::unimplemented("unimplemented".to_string()))
+                }
+
+                async fn obsolete_declarative_tunnel_connect(
+                    &self,
+                    request: ObsoleteDeclarativeTunnelConnectParams,
+                ) -> Result<ObsoleteDeclarativeTunnelConnectResults, capnp::Error> {
+                    Err(capnp::Error::unimplemented("unimplemented".to_string()))
+                }
+
+                async fn authenticate(
+                    &self,
+                    request: AuthenticateParams,
+                ) -> Result<AuthenticateResults, capnp::Error> {
+                    Err(capnp::Error::unimplemented("unimplemented".to_string()))
+                }
+
+                async fn reconnect_tunnel(
+                    &self,
+                    request: ReconnectTunnelParams,
+                ) -> Result<ReconnectTunnelResults, capnp::Error> {
+                    Err(capnp::Error::unimplemented("unimplemented".to_string()))
+                }
+            }
+
+            impl<T: Client + Clone + registration_server::server::Client + 'static>
+                tunnelrpc_capnp::tunnel_server::Server for Box<dyn ServerFactory<T>>
+            {
+                fn register_tunnel(
+                    &mut self,
+                    params: tunnelrpc_capnp::tunnel_server::RegisterTunnelParams,
+                    mut results: tunnelrpc_capnp::tunnel_server::RegisterTunnelResults,
+                ) -> Promise<(), capnp::Error> {
+                    server_async_wrapper!(RegisterTunnelParams, register_tunnel [self, params, results]);
+                }
+                fn get_server_info(
+                    &mut self,
+                    params: tunnelrpc_capnp::tunnel_server::GetServerInfoParams,
+                    mut results: tunnelrpc_capnp::tunnel_server::GetServerInfoResults,
+                ) -> Promise<(), capnp::Error> {
+                    server_async_wrapper!(GetServerInfoParams, get_server_info [self, params, results]);
+                }
+                fn unregister_tunnel(
+                    &mut self,
+                    params: tunnelrpc_capnp::tunnel_server::UnregisterTunnelParams,
+                    mut results: tunnelrpc_capnp::tunnel_server::UnregisterTunnelResults,
+                ) -> Promise<(), capnp::Error> {
+                    server_async_wrapper!(UnregisterTunnelParams, unregister_tunnel [self, params, results]);
+                }
+                fn obsolete_declarative_tunnel_connect(
+                    &mut self,
+                    params: tunnelrpc_capnp::tunnel_server::ObsoleteDeclarativeTunnelConnectParams,
+                    mut results: tunnelrpc_capnp::tunnel_server::ObsoleteDeclarativeTunnelConnectResults<>,
+                ) -> Promise<(), capnp::Error> {
+                    server_async_wrapper!(ObsoleteDeclarativeTunnelConnectParams, obsolete_declarative_tunnel_connect [self, params, results]);
+                }
+                fn authenticate(
+                    &mut self,
+                    params: tunnelrpc_capnp::tunnel_server::AuthenticateParams,
+                    mut results: tunnelrpc_capnp::tunnel_server::AuthenticateResults,
+                ) -> Promise<(), capnp::Error> {
+                    server_async_wrapper!(AuthenticateParams, authenticate [self, params, results]);
+                }
+                fn reconnect_tunnel(
+                    &mut self,
+                    params: tunnelrpc_capnp::tunnel_server::ReconnectTunnelParams,
+                    mut results: tunnelrpc_capnp::tunnel_server::ReconnectTunnelResults,
+                ) -> ::capnp::capability::Promise<(), ::capnp::Error> {
+                    server_async_wrapper!(ReconnectTunnelParams, reconnect_tunnel [self, params, results]);
+                }
+            }
+        }
+
+        #[cfg(test)]
         mod tests {
+            use std::sync::Arc;
+
+            use tokio::sync::Mutex;
+
+            use crate::capnp::rpc::tests::setup_mock_networks;
+            use crate::capnp::rpc::ServerFactory;
+            use crate::capnp::tunnelrpc::structs;
+
             #[allow(unused_imports)]
             use super::*;
 
@@ -1651,6 +2361,713 @@ pub mod interfaces {
                 let results2 = super::ReconnectTunnelResults::from_primitive(reader).unwrap();
                 assert_eq!(results, results2);
             }
+
+            #[derive(Clone)]
+            struct TunnelServer<P, R> {
+                send: tokio::sync::mpsc::Sender<P>,
+                recv: Arc<Mutex<tokio::sync::mpsc::Receiver<Result<R, capnp::Error>>>>,
+            }
+
+            #[tokio::test]
+            async fn test_client_server_register_tunnel() {
+                tokio::task::LocalSet::new()
+                    .run_until(async {
+                        let (client_network, server_network) = setup_mock_networks().await;
+                        let mut system = RpcSystem::new(client_network, None);
+                        let client = client::Client::new_from_system(&mut system);
+                        let client_runner = tokio::task::spawn_local(system);
+
+                        type Server = TunnelServer<RegisterTunnelParams, RegisterTunnelResults>;
+
+                        #[async_trait]
+                        impl server::Client for Server {
+                            async fn register_tunnel(
+                                &self,
+                                params: RegisterTunnelParams,
+                            ) -> Result<RegisterTunnelResults, capnp::Error>
+                            {
+                                self.send.send(params).await.unwrap();
+                                self.recv.lock().await.recv().await.unwrap()
+                            }
+                        }
+
+                        #[async_trait]
+                        impl registration_server::server::Client for Server {}
+
+                        let (send_params, mut recv_params) = tokio::sync::mpsc::channel(1);
+                        let (send_results, recv_results) = tokio::sync::mpsc::channel(1);
+                        let server_factory: tunnelrpc_capnp::tunnel_server::Client =
+                            capnp_rpc::new_client(Box::<dyn ServerFactory<Server>>::from(Server {
+                                send: send_params,
+                                recv: Arc::new(Mutex::new(recv_results)),
+                            }));
+                        let mut system =
+                            RpcSystem::new(server_network, Some(server_factory.client));
+                        let server_runner = tokio::task::spawn_local(system);
+
+                        let params = RegisterTunnelParams {
+                            hostname: "hostname".to_string(),
+                            options: RegistrationOptions {
+                                existing_tunnel_policy:
+                                    super::primitives::ExistingTunnelPolicy::Ignore,
+                                client_id: "client_id".to_string(),
+                                compression_quality: 1,
+                                connection_id: 7,
+                                features: vec!["123".to_string()],
+                                is_autoupdated: true,
+                                num_previous_attempts: 2,
+                                origin_local_ip: "".to_string(),
+                                os: "os".to_string(),
+                                pool_name: "pool_name".to_string(),
+                                run_from_terminal: true,
+                                tags: vec![Tag {
+                                    name: "tag".to_string(),
+                                    value: "value".to_string(),
+                                }],
+                                uuid: "uuid".to_string(),
+                                version: "version".to_string(),
+                            },
+                            origin_cert: "origin_cert".to_string().into_bytes(),
+                        };
+
+                        let result = RegisterTunnelResults {
+                            result: TunnelRegistration {
+                                conn_digest: vec![1, 2, 3],
+                                event_digest: vec![4, 5, 6],
+                                err: "Error".to_string(),
+                                log_lines: vec!["log".to_string()],
+                                permanent_failure: true,
+                                retry_after_seconds: 1,
+                                tunnel_i_d: "tunnel_id".to_string(),
+                                url: "url".to_string(),
+                            },
+                        };
+
+                        let h = {
+                            let params = params.clone();
+                            let result = result.clone();
+                            let send_results = send_results.clone();
+                            tokio::spawn(async move {
+                                assert_eq!(recv_params.recv().await.unwrap(), params);
+                                send_results.send(Ok(result)).await.unwrap();
+                                recv_params
+                            })
+                        };
+
+                        let resp = client.register_tunnel(params).await;
+                        assert!(resp.is_ok());
+                        assert_eq!(resp.unwrap(), result);
+                        assert!(h.is_finished());
+
+                        let h = h.await;
+                        assert!(h.is_ok());
+
+                        let mut recv_params = h.unwrap();
+
+                        let h = {
+                            let send_results = send_results.clone();
+                            tokio::spawn(async move {
+                                assert_eq!(recv_params.recv().await.unwrap(), Default::default());
+                                send_results
+                                    .send(Err(capnp::Error::failed(
+                                        "failure is tested for".to_string(),
+                                    )))
+                                    .await
+                                    .unwrap();
+                                recv_params
+                            })
+                        };
+
+                        let resp = client.register_tunnel(Default::default()).await;
+                        assert!(resp.is_err());
+                        assert_eq!(
+                            resp.unwrap_err().to_string(),
+                            "Failed: remote exception: failure is tested for"
+                        );
+                        assert!(h.is_finished());
+                    })
+                    .await;
+            }
+
+            #[tokio::test]
+            async fn test_client_server_get_server_info() {
+                tokio::task::LocalSet::new()
+                    .run_until(async {
+                        let (client_network, server_network) = setup_mock_networks().await;
+                        let mut system = RpcSystem::new(client_network, None);
+                        let client = client::Client::new_from_system(&mut system);
+                        let client_runner = tokio::task::spawn_local(system);
+
+                        type Server = TunnelServer<GetServerInfoParams, GetServerInfoResults>;
+
+                        #[async_trait]
+                        impl server::Client for Server {
+                            async fn get_server_info(
+                                &self,
+                                params: GetServerInfoParams,
+                            ) -> Result<GetServerInfoResults, capnp::Error>
+                            {
+                                self.send.send(params).await.unwrap();
+                                self.recv.lock().await.recv().await.unwrap()
+                            }
+                        }
+
+                        #[async_trait]
+                        impl registration_server::server::Client for Server {}
+
+                        let (send_params, mut recv_params) = tokio::sync::mpsc::channel(1);
+                        let (send_results, recv_results) = tokio::sync::mpsc::channel(1);
+                        let server_factory: tunnelrpc_capnp::tunnel_server::Client =
+                            capnp_rpc::new_client(Box::<dyn ServerFactory<Server>>::from(Server {
+                                send: send_params,
+                                recv: Arc::new(Mutex::new(recv_results)),
+                            }));
+                        let mut system =
+                            RpcSystem::new(server_network, Some(server_factory.client));
+                        let server_runner = tokio::task::spawn_local(system);
+
+                        let params = GetServerInfoParams {};
+
+                        let result = GetServerInfoResults {
+                            result: structs::ServerInfo {
+                                location_name: "location_name".to_string(),
+                            },
+                        };
+
+                        let h = {
+                            let params = params.clone();
+                            let result = result.clone();
+                            let send_results = send_results.clone();
+                            tokio::spawn(async move {
+                                assert_eq!(recv_params.recv().await.unwrap(), params);
+                                send_results.send(Ok(result)).await.unwrap();
+                                recv_params
+                            })
+                        };
+
+                        let resp = client.get_server_info(params).await;
+                        assert!(resp.is_ok());
+                        assert_eq!(resp.unwrap(), result);
+                        assert!(h.is_finished());
+
+                        let h = h.await;
+                        assert!(h.is_ok());
+
+                        let mut recv_params = h.unwrap();
+
+                        let h = {
+                            let send_results = send_results.clone();
+                            tokio::spawn(async move {
+                                assert_eq!(recv_params.recv().await.unwrap(), Default::default());
+                                send_results
+                                    .send(Err(capnp::Error::failed(
+                                        "failure is tested for".to_string(),
+                                    )))
+                                    .await
+                                    .unwrap();
+                                recv_params
+                            })
+                        };
+
+                        let resp = client.get_server_info(Default::default()).await;
+                        assert!(resp.is_err());
+                        assert_eq!(
+                            resp.unwrap_err().to_string(),
+                            "Failed: remote exception: failure is tested for"
+                        );
+                        assert!(h.is_finished());
+                    })
+                    .await;
+            }
+
+            #[tokio::test]
+            async fn test_client_server_unregister_tunnel() {
+                tokio::task::LocalSet::new()
+                    .run_until(async {
+                        let (client_network, server_network) = setup_mock_networks().await;
+                        let mut system = RpcSystem::new(client_network, None);
+                        let client = client::Client::new_from_system(&mut system);
+                        let client_runner = tokio::task::spawn_local(system);
+
+                        type Server = TunnelServer<UnregisterTunnelParams, UnregisterTunnelResults>;
+
+                        #[async_trait]
+                        impl server::Client for Server {
+                            async fn unregister_tunnel(
+                                &self,
+                                params: UnregisterTunnelParams,
+                            ) -> Result<UnregisterTunnelResults, capnp::Error>
+                            {
+                                self.send.send(params).await.unwrap();
+                                self.recv.lock().await.recv().await.unwrap()
+                            }
+                        }
+
+                        #[async_trait]
+                        impl registration_server::server::Client for Server {}
+
+                        let (send_params, mut recv_params) = tokio::sync::mpsc::channel(1);
+                        let (send_results, recv_results) = tokio::sync::mpsc::channel(1);
+                        let server_factory: tunnelrpc_capnp::tunnel_server::Client =
+                            capnp_rpc::new_client(Box::<dyn ServerFactory<Server>>::from(Server {
+                                send: send_params,
+                                recv: Arc::new(Mutex::new(recv_results)),
+                            }));
+                        let mut system =
+                            RpcSystem::new(server_network, Some(server_factory.client));
+                        let server_runner = tokio::task::spawn_local(system);
+
+                        let params = UnregisterTunnelParams {
+                            grace_period_nano_sec: 123,
+                        };
+
+                        let result = UnregisterTunnelResults {};
+
+                        let h = {
+                            let params = params.clone();
+                            let result = result.clone();
+                            let send_results = send_results.clone();
+                            tokio::spawn(async move {
+                                assert_eq!(recv_params.recv().await.unwrap(), params);
+                                send_results.send(Ok(result)).await.unwrap();
+                                recv_params
+                            })
+                        };
+
+                        let resp = client.unregister_tunnel(params).await;
+                        assert!(resp.is_ok());
+                        assert_eq!(resp.unwrap(), result);
+                        assert!(h.is_finished());
+
+                        let h = h.await;
+                        assert!(h.is_ok());
+
+                        let mut recv_params = h.unwrap();
+
+                        let h = {
+                            let send_results = send_results.clone();
+                            tokio::spawn(async move {
+                                assert_eq!(recv_params.recv().await.unwrap(), Default::default());
+                                send_results
+                                    .send(Err(capnp::Error::failed(
+                                        "failure is tested for".to_string(),
+                                    )))
+                                    .await
+                                    .unwrap();
+                                recv_params
+                            })
+                        };
+
+                        let resp = client.unregister_tunnel(Default::default()).await;
+                        assert!(resp.is_err());
+                        assert_eq!(
+                            resp.unwrap_err().to_string(),
+                            "Failed: remote exception: failure is tested for"
+                        );
+                        assert!(h.is_finished());
+                    })
+                    .await;
+            }
+
+            #[tokio::test]
+            async fn test_client_server_obsolete_declarative_tunnel_connect() {
+                tokio::task::LocalSet::new()
+                    .run_until(async {
+                        let (client_network, server_network) = setup_mock_networks().await;
+                        let mut system = RpcSystem::new(client_network, None);
+                        let client = client::Client::new_from_system(&mut system);
+                        let client_runner = tokio::task::spawn_local(system);
+
+                        type Server = TunnelServer<
+                            ObsoleteDeclarativeTunnelConnectParams,
+                            ObsoleteDeclarativeTunnelConnectResults,
+                        >;
+
+                        #[async_trait]
+                        impl server::Client for Server {
+                            async fn obsolete_declarative_tunnel_connect(
+                                &self,
+                                params: ObsoleteDeclarativeTunnelConnectParams,
+                            ) -> Result<ObsoleteDeclarativeTunnelConnectResults, capnp::Error>
+                            {
+                                self.send.send(params).await.unwrap();
+                                self.recv.lock().await.recv().await.unwrap()
+                            }
+                        }
+
+                        #[async_trait]
+                        impl registration_server::server::Client for Server {}
+
+                        let (send_params, mut recv_params) = tokio::sync::mpsc::channel(1);
+                        let (send_results, recv_results) = tokio::sync::mpsc::channel(1);
+                        let server_factory: tunnelrpc_capnp::tunnel_server::Client =
+                            capnp_rpc::new_client(Box::<dyn ServerFactory<Server>>::from(Server {
+                                send: send_params,
+                                recv: Arc::new(Mutex::new(recv_results)),
+                            }));
+                        let mut system =
+                            RpcSystem::new(server_network, Some(server_factory.client));
+                        let server_runner = tokio::task::spawn_local(system);
+
+                        let params = ObsoleteDeclarativeTunnelConnectParams {};
+                        let result = ObsoleteDeclarativeTunnelConnectResults {};
+
+                        let h = {
+                            let params = params.clone();
+                            let result = result.clone();
+                            let send_results = send_results.clone();
+                            tokio::spawn(async move {
+                                assert_eq!(recv_params.recv().await.unwrap(), params);
+                                send_results.send(Ok(result)).await.unwrap();
+                                recv_params
+                            })
+                        };
+
+                        let resp = client.obsolete_declarative_tunnel_connect(params).await;
+                        assert!(resp.is_ok());
+                        assert_eq!(resp.unwrap(), result);
+                        assert!(h.is_finished());
+
+                        let h = h.await;
+                        assert!(h.is_ok());
+
+                        let mut recv_params = h.unwrap();
+
+                        let h = {
+                            let send_results = send_results.clone();
+                            tokio::spawn(async move {
+                                assert_eq!(recv_params.recv().await.unwrap(), Default::default());
+                                send_results
+                                    .send(Err(capnp::Error::failed(
+                                        "failure is tested for".to_string(),
+                                    )))
+                                    .await
+                                    .unwrap();
+                                recv_params
+                            })
+                        };
+
+                        let resp = client
+                            .obsolete_declarative_tunnel_connect(Default::default())
+                            .await;
+                        assert!(resp.is_err());
+                        assert_eq!(
+                            resp.unwrap_err().to_string(),
+                            "Failed: remote exception: failure is tested for"
+                        );
+                        assert!(h.is_finished());
+                    })
+                    .await;
+            }
+
+            #[tokio::test]
+            async fn test_client_server_authenticate() {
+                tokio::task::LocalSet::new()
+                    .run_until(async {
+                        let (client_network, server_network) = setup_mock_networks().await;
+                        let mut system = RpcSystem::new(client_network, None);
+                        let client = client::Client::new_from_system(&mut system);
+                        let client_runner = tokio::task::spawn_local(system);
+
+                        type Server = TunnelServer<AuthenticateParams, AuthenticateResults>;
+
+                        #[async_trait]
+                        impl server::Client for Server {
+                            async fn authenticate(
+                                &self,
+                                params: AuthenticateParams,
+                            ) -> Result<AuthenticateResults, capnp::Error>
+                            {
+                                self.send.send(params).await.unwrap();
+                                self.recv.lock().await.recv().await.unwrap()
+                            }
+                        }
+
+                        #[async_trait]
+                        impl registration_server::server::Client for Server {}
+
+                        let (send_params, mut recv_params) = tokio::sync::mpsc::channel(1);
+                        let (send_results, recv_results) = tokio::sync::mpsc::channel(1);
+                        let server_factory: tunnelrpc_capnp::tunnel_server::Client =
+                            capnp_rpc::new_client(Box::<dyn ServerFactory<Server>>::from(Server {
+                                send: send_params,
+                                recv: Arc::new(Mutex::new(recv_results)),
+                            }));
+                        let mut system =
+                            RpcSystem::new(server_network, Some(server_factory.client));
+                        let server_runner = tokio::task::spawn_local(system);
+
+                        let params = AuthenticateParams {
+                            hostname: "hostname".to_string(),
+                            origin_cert: "origin_cert".to_string().into_bytes(),
+                            options: structs::RegistrationOptions {
+                                client_id: "client_id".to_string(),
+                                origin_local_ip: "origin_local_ip".to_string(),
+                                os: "os".to_string(),
+                                pool_name: "pool_name".to_string(),
+                                uuid: "uuid".to_string(),
+                                version: "version".to_string(),
+                                compression_quality: 1,
+                                connection_id: 50,
+                                num_previous_attempts: 10,
+                                is_autoupdated: true,
+                                run_from_terminal: true,
+                                tags: vec![structs::Tag {
+                                    name: "name".to_string(),
+                                    value: "value".to_string(),
+                                }],
+                                features: vec!["feature1".to_string(), "feature2".to_string()],
+                                existing_tunnel_policy: primitives::ExistingTunnelPolicy::Ignore,
+                            },
+                        };
+
+                        let result = AuthenticateResults {
+                            result: structs::AuthenticationResponse {
+                                hours_until_refresh: 1,
+                                jwt: "jwt".to_string().into_bytes(),
+                                permanent_err: "permanent_err".to_string(),
+                                retryable_err: "retryable_err".to_string(),
+                            },
+                        };
+
+                        let h = {
+                            let params = params.clone();
+                            let result = result.clone();
+                            let send_results = send_results.clone();
+                            tokio::spawn(async move {
+                                assert_eq!(recv_params.recv().await.unwrap(), params);
+                                send_results.send(Ok(result)).await.unwrap();
+                                recv_params
+                            })
+                        };
+
+                        let resp = client.authenticate(params).await;
+                        assert!(resp.is_ok());
+                        assert_eq!(resp.unwrap(), result);
+                        assert!(h.is_finished());
+
+                        let h = h.await;
+                        assert!(h.is_ok());
+
+                        let mut recv_params = h.unwrap();
+
+                        let h = {
+                            let send_results = send_results.clone();
+                            tokio::spawn(async move {
+                                assert_eq!(recv_params.recv().await.unwrap(), Default::default());
+                                send_results
+                                    .send(Err(capnp::Error::failed(
+                                        "failure is tested for".to_string(),
+                                    )))
+                                    .await
+                                    .unwrap();
+                                recv_params
+                            })
+                        };
+
+                        let resp = client.authenticate(Default::default()).await;
+                        assert!(resp.is_err());
+                        assert_eq!(
+                            resp.unwrap_err().to_string(),
+                            "Failed: remote exception: failure is tested for"
+                        );
+                        assert!(h.is_finished());
+                    })
+                    .await;
+            }
+
+            #[tokio::test]
+            async fn test_client_server_reconnect_tunnel() {
+                tokio::task::LocalSet::new()
+                    .run_until(async {
+                        let (client_network, server_network) = setup_mock_networks().await;
+                        let mut system = RpcSystem::new(client_network, None);
+                        let client = client::Client::new_from_system(&mut system);
+                        let client_runner = tokio::task::spawn_local(system);
+
+                        type Server = TunnelServer<ReconnectTunnelParams, ReconnectTunnelResults>;
+
+                        #[async_trait]
+                        impl server::Client for Server {
+                            async fn reconnect_tunnel(
+                                &self,
+                                params: ReconnectTunnelParams,
+                            ) -> Result<ReconnectTunnelResults, capnp::Error>
+                            {
+                                self.send.send(params).await.unwrap();
+                                self.recv.lock().await.recv().await.unwrap()
+                            }
+                        }
+
+                        #[async_trait]
+                        impl registration_server::server::Client for Server {}
+
+                        let (send_params, mut recv_params) = tokio::sync::mpsc::channel(1);
+                        let (send_results, recv_results) = tokio::sync::mpsc::channel(1);
+                        let server_factory: tunnelrpc_capnp::tunnel_server::Client =
+                            capnp_rpc::new_client(Box::<dyn ServerFactory<Server>>::from(Server {
+                                send: send_params,
+                                recv: Arc::new(Mutex::new(recv_results)),
+                            }));
+                        let mut system =
+                            RpcSystem::new(server_network, Some(server_factory.client));
+                        let server_runner = tokio::task::spawn_local(system);
+
+                        let params = ReconnectTunnelParams {
+                            conn_digest: "conn_digest".to_string().into_bytes(),
+                            event_digest: "event_digest".to_string().into_bytes(),
+                            jwt: "jwt".to_string().into_bytes(),
+                            hostname: "hostname".to_string(),
+                            options: structs::RegistrationOptions {
+                                client_id: "client_id".to_string(),
+                                origin_local_ip: "origin_local_ip".to_string(),
+                                os: "os".to_string(),
+                                pool_name: "pool_name".to_string(),
+                                uuid: "uuid".to_string(),
+                                version: "version".to_string(),
+                                compression_quality: 1,
+                                connection_id: 50,
+                                num_previous_attempts: 10,
+                                is_autoupdated: true,
+                                run_from_terminal: true,
+                                tags: vec![structs::Tag {
+                                    name: "name".to_string(),
+                                    value: "value".to_string(),
+                                }],
+                                features: vec!["feature1".to_string(), "feature2".to_string()],
+                                existing_tunnel_policy: primitives::ExistingTunnelPolicy::Ignore,
+                            },
+                        };
+
+                        let result = ReconnectTunnelResults {
+                            result: structs::TunnelRegistration {
+                                conn_digest: "conn_digest".to_string().into_bytes(),
+                                event_digest: "event_digest".to_string().into_bytes(),
+                                err: "err".to_string(),
+                                tunnel_i_d: "tunnel_i_d".to_string(),
+                                url: "url".to_string(),
+                                log_lines: vec!["log_line1".to_string(), "log_line2".to_string()],
+                                permanent_failure: true,
+                                retry_after_seconds: 20,
+                            },
+                        };
+
+                        let h = {
+                            let params = params.clone();
+                            let result = result.clone();
+                            let send_results = send_results.clone();
+                            tokio::spawn(async move {
+                                assert_eq!(recv_params.recv().await.unwrap(), params);
+                                send_results.send(Ok(result)).await.unwrap();
+                                recv_params
+                            })
+                        };
+
+                        let resp = client.reconnect_tunnel(params).await;
+                        assert!(resp.is_ok());
+                        assert_eq!(resp.unwrap(), result);
+                        assert!(h.is_finished());
+
+                        let h = h.await;
+                        assert!(h.is_ok());
+
+                        let mut recv_params = h.unwrap();
+
+                        let h = {
+                            let send_results = send_results.clone();
+                            tokio::spawn(async move {
+                                assert_eq!(recv_params.recv().await.unwrap(), Default::default());
+                                send_results
+                                    .send(Err(capnp::Error::failed(
+                                        "failure is tested for".to_string(),
+                                    )))
+                                    .await
+                                    .unwrap();
+                                recv_params
+                            })
+                        };
+
+                        let resp = client.reconnect_tunnel(Default::default()).await;
+                        assert!(resp.is_err());
+                        assert_eq!(
+                            resp.unwrap_err().to_string(),
+                            "Failed: remote exception: failure is tested for"
+                        );
+                        assert!(h.is_finished());
+                    })
+                    .await;
+            }
+
+            #[tokio::test]
+            async fn test_client_server_unimplemented() {
+                tokio::task::LocalSet::new()
+                    .run_until(async {
+                        let (client_network, server_network) = setup_mock_networks().await;
+                        let mut system = RpcSystem::new(client_network, None);
+                        let client = client::Client::new_from_system(&mut system);
+                        let client_runner = tokio::task::spawn_local(system);
+
+                        #[derive(Clone)]
+                        struct Server {}
+
+                        #[async_trait]
+                        impl server::Client for Server {}
+
+                        #[async_trait]
+                        impl registration_server::server::Client for Server {}
+
+                        let server_factory: tunnelrpc_capnp::tunnel_server::Client =
+                            capnp_rpc::new_client(Box::<dyn ServerFactory<Server>>::from(
+                                Server {},
+                            ));
+                        let mut system =
+                            RpcSystem::new(server_network, Some(server_factory.client));
+                        let server_runner = tokio::task::spawn_local(system);
+
+                        let resp = client.register_tunnel(Default::default()).await;
+                        assert!(resp.is_err());
+                        assert_eq!(
+                            resp.unwrap_err().to_string(),
+                            "Unimplemented: remote exception: unimplemented"
+                        );
+
+                        let resp = client.get_server_info(Default::default()).await;
+                        assert!(resp.is_err());
+                        assert_eq!(
+                            resp.unwrap_err().to_string(),
+                            "Unimplemented: remote exception: unimplemented"
+                        );
+
+                        let resp = client.unregister_tunnel(Default::default()).await;
+                        assert!(resp.is_err());
+                        assert_eq!(
+                            resp.unwrap_err().to_string(),
+                            "Unimplemented: remote exception: unimplemented"
+                        );
+
+                        let resp = client.obsolete_declarative_tunnel_connect(Default::default()).await;
+                        assert!(resp.is_err());
+                        assert_eq!(
+                            resp.unwrap_err().to_string(),
+                            "Unimplemented: remote exception: unimplemented"
+                        );
+
+                        let resp = client.authenticate(Default::default()).await;
+                        assert!(resp.is_err());
+                        assert_eq!(
+                            resp.unwrap_err().to_string(),
+                            "Unimplemented: remote exception: unimplemented"
+                        );
+
+                        let resp = client.reconnect_tunnel(Default::default()).await;
+                        assert!(resp.is_err());
+                        assert_eq!(
+                            resp.unwrap_err().to_string(),
+                            "Unimplemented: remote exception: unimplemented"
+                        );
+                    })
+                    .await;
+            }
         }
     }
 
@@ -1659,9 +3076,15 @@ pub mod interfaces {
 
         use super::primitives;
         use super::structs::*;
+        use crate::capnp::raw::tunnelrpc_capnp;
         use anyhow::Result;
+        use async_trait::async_trait;
+        use capnp::capability::Promise;
+        use capnp_rpc::{twoparty::VatId, RpcSystem};
 
-        #[derive(Clone, Debug, PartialEq, Eq)]
+        use crate::capnp::rpc::{server_async_wrapper, ServerFactory};
+
+        #[derive(Default, Clone, Debug, PartialEq, Eq)]
         pub struct RegisterUdpSessionParams {
             pub session_id: Vec<u8>,
             pub dst_ip: Vec<u8>,
@@ -1691,7 +3114,7 @@ pub mod interfaces {
             }
         }
 
-        #[derive(Clone, Debug, PartialEq, Eq)]
+        #[derive(Default, Clone, Debug, PartialEq, Eq)]
         pub struct RegisterUdpSessionResults {
             pub result: RegisterUdpSessionResponse,
         }
@@ -1712,7 +3135,7 @@ pub mod interfaces {
             }
         }
 
-        #[derive(Clone, Debug, PartialEq, Eq)]
+        #[derive(Default, Clone, Debug, PartialEq, Eq)]
         pub struct UnregisterUdpSessionParams {
             pub session_id: Vec<u8>,
             pub message: String,
@@ -1736,7 +3159,7 @@ pub mod interfaces {
             }
         }
 
-        #[derive(Clone, Debug, PartialEq, Eq)]
+        #[derive(Default, Clone, Debug, PartialEq, Eq)]
         pub struct UnregisterUdpSessionResults {}
 
         impl UnregisterUdpSessionResults {
@@ -1751,8 +3174,99 @@ pub mod interfaces {
             }
         }
 
+        pub mod client {
+            use super::*;
+
+            #[derive(Clone)]
+            pub struct Client {
+                inner: tunnelrpc_capnp::session_manager::Client,
+            }
+
+            impl Client {
+                pub fn new(inner: tunnelrpc_capnp::session_manager::Client) -> Self {
+                    Self { inner }
+                }
+
+                pub fn new_from_system(system: &mut RpcSystem<VatId>) -> Self {
+                    Self::new(system.bootstrap(VatId::Server))
+                }
+
+                pub async fn register_udp_session(
+                    &self,
+                    params: RegisterUdpSessionParams,
+                ) -> Result<RegisterUdpSessionResults> {
+                    let mut req = self.inner.register_udp_session_request();
+                    params.to_primitive(req.get());
+
+                    let response = req.send().promise.await?;
+                    let response = response.get()?;
+
+                    RegisterUdpSessionResults::from_primitive(response)
+                }
+                pub async fn unregister_udp_session(
+                    &self,
+                    params: UnregisterUdpSessionParams,
+                ) -> Result<UnregisterUdpSessionResults> {
+                    let mut req = self.inner.unregister_udp_session_request();
+                    params.to_primitive(req.get());
+
+                    let response = req.send().promise.await?;
+                    let response = response.get()?;
+
+                    UnregisterUdpSessionResults::from_primitive(response)
+                }
+            }
+        }
+
+        pub mod server {
+            use super::*;
+
+            #[async_trait]
+            pub trait Client: Send + Sync {
+                async fn register_udp_session(
+                    &self,
+                    request: RegisterUdpSessionParams,
+                ) -> Result<RegisterUdpSessionResults, capnp::Error> {
+                    Err(capnp::Error::unimplemented("unimplemented".to_string()))
+                }
+
+                async fn unregister_udp_session(
+                    &self,
+                    request: UnregisterUdpSessionParams,
+                ) -> Result<UnregisterUdpSessionResults, capnp::Error> {
+                    Err(capnp::Error::unimplemented("unimplemented".to_string()))
+                }
+            }
+
+            impl<T: Client + Clone + 'static> tunnelrpc_capnp::session_manager::Server
+                for Box<dyn ServerFactory<T>>
+            {
+                fn register_udp_session(
+                    &mut self,
+                    params: tunnelrpc_capnp::session_manager::RegisterUdpSessionParams,
+                    mut results: tunnelrpc_capnp::session_manager::RegisterUdpSessionResults,
+                ) -> Promise<(), ::capnp::Error> {
+                    server_async_wrapper!(RegisterUdpSessionParams, register_udp_session [self, params, results]);
+                }
+
+                fn unregister_udp_session(
+                    &mut self,
+                    params: tunnelrpc_capnp::session_manager::UnregisterUdpSessionParams,
+                    mut results: tunnelrpc_capnp::session_manager::UnregisterUdpSessionResults,
+                ) -> Promise<(), ::capnp::Error> {
+                    server_async_wrapper!(UnregisterUdpSessionParams, unregister_udp_session [self, params, results]);
+                }
+            }
+        }
+
         #[cfg(test)]
         mod tests {
+            use std::sync::Arc;
+
+            use tokio::sync::Mutex;
+
+            use crate::capnp::rpc::tests::setup_mock_networks;
+
             use super::*;
 
             #[test]
@@ -1827,6 +3341,235 @@ pub mod interfaces {
                 let results2 = super::UnregisterUdpSessionResults::from_primitive(reader).unwrap();
                 assert_eq!(results, results2);
             }
+
+            #[derive(Clone)]
+            struct SessionManager<P, R> {
+                send: tokio::sync::mpsc::Sender<P>,
+                recv: Arc<Mutex<tokio::sync::mpsc::Receiver<Result<R, capnp::Error>>>>,
+            }
+
+            #[tokio::test]
+            async fn test_client_server_register_udp_session() {
+                tokio::task::LocalSet::new()
+                    .run_until(async {
+                        let (client_network, server_network) = setup_mock_networks().await;
+                        let mut system = RpcSystem::new(client_network, None);
+                        let client = client::Client::new_from_system(&mut system);
+                        let client_runner = tokio::task::spawn_local(system);
+
+                        type Server =
+                            SessionManager<RegisterUdpSessionParams, RegisterUdpSessionResults>;
+
+                        #[async_trait]
+                        impl server::Client for Server {
+                            async fn register_udp_session(
+                                &self,
+                                request: RegisterUdpSessionParams,
+                            ) -> Result<RegisterUdpSessionResults, capnp::Error>
+                            {
+                                self.send.send(request).await.unwrap();
+                                self.recv.lock().await.recv().await.unwrap()
+                            }
+                        }
+
+                        let (send_params, mut recv_params) = tokio::sync::mpsc::channel(1);
+                        let (send_results, recv_results) = tokio::sync::mpsc::channel(1);
+                        let server_factory: tunnelrpc_capnp::session_manager::Client =
+                            capnp_rpc::new_client(Box::<dyn ServerFactory<Server>>::from(Server {
+                                send: send_params,
+                                recv: Arc::new(Mutex::new(recv_results)),
+                            }));
+                        let mut system =
+                            RpcSystem::new(server_network, Some(server_factory.client));
+                        let server_runner = tokio::task::spawn_local(system);
+
+                        let params = RegisterUdpSessionParams {
+                            dst_ip: vec![1, 2, 3],
+                            session_id: vec![4, 5, 6],
+                            close_after_idle_hint: 1,
+                            trace_context: "trace_context".to_string(),
+                        };
+
+                        let result = RegisterUdpSessionResults {
+                            result: RegisterUdpSessionResponse {
+                                err: "error".to_string(),
+                                spans: vec![1, 2, 3, 4],
+                            },
+                        };
+
+                        let h = {
+                            let params = params.clone();
+                            let result = result.clone();
+                            let send_results = send_results.clone();
+                            tokio::spawn(async move {
+                                assert_eq!(recv_params.recv().await.unwrap(), params);
+                                send_results.send(Ok(result)).await.unwrap();
+                                recv_params
+                            })
+                        };
+
+                        let resp = client.register_udp_session(params).await;
+                        assert!(resp.is_ok());
+                        assert_eq!(resp.unwrap(), result);
+                        assert!(h.is_finished());
+
+                        let h = h.await;
+                        assert!(h.is_ok());
+
+                        let mut recv_params = h.unwrap();
+
+                        let h = {
+                            let send_results = send_results.clone();
+                            tokio::spawn(async move {
+                                assert_eq!(recv_params.recv().await.unwrap(), Default::default());
+                                send_results
+                                    .send(Err(capnp::Error::failed(
+                                        "failure is tested for".to_string(),
+                                    )))
+                                    .await
+                                    .unwrap();
+                                recv_params
+                            })
+                        };
+
+                        let resp = client.register_udp_session(Default::default()).await;
+                        assert!(resp.is_err());
+                        assert_eq!(
+                            resp.unwrap_err().to_string(),
+                            "Failed: remote exception: failure is tested for"
+                        );
+                        assert!(h.is_finished());
+                    })
+                    .await;
+            }
+
+            #[tokio::test]
+            async fn test_client_server_unregister_udp_session() {
+                tokio::task::LocalSet::new()
+                    .run_until(async {
+                        let (client_network, server_network) = setup_mock_networks().await;
+                        let mut system = RpcSystem::new(client_network, None);
+                        let client = client::Client::new_from_system(&mut system);
+                        let client_runner = tokio::task::spawn_local(system);
+
+                        type Server =
+                            SessionManager<UnregisterUdpSessionParams, UnregisterUdpSessionResults>;
+
+                        #[async_trait]
+                        impl server::Client for Server {
+                            async fn unregister_udp_session(
+                                &self,
+                                request: UnregisterUdpSessionParams,
+                            ) -> Result<UnregisterUdpSessionResults, capnp::Error>
+                            {
+                                self.send.send(request).await.unwrap();
+                                self.recv.lock().await.recv().await.unwrap()
+                            }
+                        }
+
+                        let (send_params, mut recv_params) = tokio::sync::mpsc::channel(1);
+                        let (send_results, recv_results) = tokio::sync::mpsc::channel(1);
+                        let server_factory: tunnelrpc_capnp::session_manager::Client =
+                            capnp_rpc::new_client(Box::<dyn ServerFactory<Server>>::from(Server {
+                                send: send_params,
+                                recv: Arc::new(Mutex::new(recv_results)),
+                            }));
+                        let mut system =
+                            RpcSystem::new(server_network, Some(server_factory.client));
+                        let server_runner = tokio::task::spawn_local(system);
+
+                        let params = UnregisterUdpSessionParams {
+                            session_id: vec![1, 2, 3],
+                            message: "message".to_string(),
+                        };
+
+                        let result = UnregisterUdpSessionResults {};
+
+                        let h = {
+                            let params = params.clone();
+                            let result = result.clone();
+                            let send_results = send_results.clone();
+                            tokio::spawn(async move {
+                                assert_eq!(recv_params.recv().await.unwrap(), params);
+                                send_results.send(Ok(result)).await.unwrap();
+                                recv_params
+                            })
+                        };
+
+                        let resp = client.unregister_udp_session(params).await;
+                        assert!(resp.is_ok());
+                        assert_eq!(resp.unwrap(), result);
+                        assert!(h.is_finished());
+
+                        let h = h.await;
+                        assert!(h.is_ok());
+
+                        let mut recv_params = h.unwrap();
+
+                        let h = {
+                            let send_results = send_results.clone();
+                            tokio::spawn(async move {
+                                assert_eq!(recv_params.recv().await.unwrap(), Default::default());
+                                send_results
+                                    .send(Err(capnp::Error::failed(
+                                        "failure is tested for".to_string(),
+                                    )))
+                                    .await
+                                    .unwrap();
+                                recv_params
+                            })
+                        };
+
+                        let resp = client.unregister_udp_session(Default::default()).await;
+                        assert!(resp.is_err());
+                        assert_eq!(
+                            resp.unwrap_err().to_string(),
+                            "Failed: remote exception: failure is tested for"
+                        );
+                        assert!(h.is_finished());
+                    })
+                    .await;
+            }
+        
+            #[tokio::test]
+            async fn test_client_server_unimplemented() {
+                tokio::task::LocalSet::new()
+                    .run_until(async {
+                        let (client_network, server_network) = setup_mock_networks().await;
+                        let mut system = RpcSystem::new(client_network, None);
+                        let client = client::Client::new_from_system(&mut system);
+                        let client_runner = tokio::task::spawn_local(system);
+
+                        #[derive(Clone)]
+                        struct Server {}
+
+                        #[async_trait]
+                        impl server::Client for Server {}
+
+                        let server_factory: tunnelrpc_capnp::session_manager::Client =
+                            capnp_rpc::new_client(Box::<dyn ServerFactory<Server>>::from(
+                                Server {},
+                            ));
+                        let mut system =
+                            RpcSystem::new(server_network, Some(server_factory.client));
+                        let server_runner = tokio::task::spawn_local(system);
+
+                        let resp = client.register_udp_session(Default::default()).await;
+                        assert!(resp.is_err());
+                        assert_eq!(
+                            resp.unwrap_err().to_string(),
+                            "Unimplemented: remote exception: unimplemented"
+                        );
+
+                        let resp = client.unregister_udp_session(Default::default()).await;
+                        assert!(resp.is_err());
+                        assert_eq!(
+                            resp.unwrap_err().to_string(),
+                            "Unimplemented: remote exception: unimplemented"
+                        );
+                    })
+                    .await;
+            }
         }
     }
 
@@ -1835,9 +3578,15 @@ pub mod interfaces {
 
         use super::primitives;
         use super::structs::*;
+        use crate::capnp::raw::tunnelrpc_capnp;
         use anyhow::Result;
+        use async_trait::async_trait;
+        use capnp::capability::Promise;
+        use capnp_rpc::{twoparty::VatId, RpcSystem};
 
-        #[derive(Clone, Debug, PartialEq, Eq)]
+        use crate::capnp::rpc::{server_async_wrapper, ServerFactory};
+
+        #[derive(Default, Clone, Debug, PartialEq, Eq)]
         pub struct UpdateConfigurationParams {
             pub version: i32,
             pub config: Vec<u8>,
@@ -1861,7 +3610,7 @@ pub mod interfaces {
             }
         }
 
-        #[derive(Clone, Debug, PartialEq, Eq)]
+        #[derive(Default, Clone, Debug, PartialEq, Eq)]
         pub struct UpdateConfigurationResults {
             pub result: UpdateConfigurationResponse,
         }
@@ -1882,8 +3631,72 @@ pub mod interfaces {
             }
         }
 
+        pub mod client {
+            use super::*;
+
+            #[derive(Clone)]
+            pub struct Client {
+                inner: tunnelrpc_capnp::configuration_manager::Client,
+            }
+
+            impl Client {
+                pub fn new(inner: tunnelrpc_capnp::configuration_manager::Client) -> Self {
+                    Self { inner }
+                }
+
+                pub fn new_from_system(system: &mut RpcSystem<VatId>) -> Self {
+                    Self::new(system.bootstrap(VatId::Server))
+                }
+
+                pub async fn update_configuration(
+                    &self,
+                    params: UpdateConfigurationParams,
+                ) -> Result<UpdateConfigurationResults> {
+                    let mut req = self.inner.update_configuration_request();
+                    params.to_primitive(req.get());
+
+                    let response = req.send().promise.await?;
+                    let response = response.get()?;
+
+                    UpdateConfigurationResults::from_primitive(response)
+                }
+            }
+        }
+
+        pub mod server {
+            use super::*;
+
+            #[async_trait]
+            pub trait Client: Send + Sync {
+                async fn update_configuration(
+                    &self,
+                    request: UpdateConfigurationParams,
+                ) -> Result<UpdateConfigurationResults, capnp::Error> {
+                    Err(capnp::Error::unimplemented("unimplemented".to_string()))
+                }
+            }
+
+            impl<T: Client + Clone + 'static> tunnelrpc_capnp::configuration_manager::Server
+                for Box<dyn ServerFactory<T>>
+            {
+                fn update_configuration(
+                    &mut self,
+                    params: tunnelrpc_capnp::configuration_manager::UpdateConfigurationParams,
+                    mut results: tunnelrpc_capnp::configuration_manager::UpdateConfigurationResults,
+                ) -> Promise<(), ::capnp::Error> {
+                    server_async_wrapper!(UpdateConfigurationParams, update_configuration [self, params, results]);
+                }
+            }
+        }
+
         #[cfg(test)]
         mod tests {
+            use std::sync::Arc;
+
+            use tokio::sync::Mutex;
+
+            use crate::capnp::{rpc::tests::setup_mock_networks, tunnelrpc::structs};
+
             use super::*;
 
             #[test]
@@ -1922,6 +3735,140 @@ pub mod interfaces {
                     .unwrap();
                 let results2 = super::UpdateConfigurationResults::from_primitive(reader).unwrap();
                 assert_eq!(results, results2);
+            }
+
+            #[derive(Clone)]
+            struct ConfigurationManager<P, R> {
+                send: tokio::sync::mpsc::Sender<P>,
+                recv: Arc<Mutex<tokio::sync::mpsc::Receiver<Result<R, capnp::Error>>>>,
+            }
+
+            #[tokio::test]
+            async fn test_client_server_update_configuration() {
+                tokio::task::LocalSet::new()
+                    .run_until(async {
+                        let (client_network, server_network) = setup_mock_networks().await;
+                        let mut system = RpcSystem::new(client_network, None);
+                        let client = client::Client::new_from_system(&mut system);
+                        let client_runner = tokio::task::spawn_local(system);
+
+                        type Server = ConfigurationManager<
+                            UpdateConfigurationParams,
+                            UpdateConfigurationResults,
+                        >;
+
+                        #[async_trait]
+                        impl server::Client for Server {
+                            async fn update_configuration(
+                                &self,
+                                request: UpdateConfigurationParams,
+                            ) -> Result<UpdateConfigurationResults, capnp::Error>
+                            {
+                                self.send.send(request).await.unwrap();
+                                self.recv.lock().await.recv().await.unwrap()
+                            }
+                        }
+
+                        let (send_params, mut recv_params) = tokio::sync::mpsc::channel(1);
+                        let (send_results, recv_results) = tokio::sync::mpsc::channel(1);
+                        let server_factory: tunnelrpc_capnp::configuration_manager::Client =
+                            capnp_rpc::new_client(Box::<dyn ServerFactory<Server>>::from(Server {
+                                send: send_params,
+                                recv: Arc::new(Mutex::new(recv_results)),
+                            }));
+                        let mut system =
+                            RpcSystem::new(server_network, Some(server_factory.client));
+                        let server_runner = tokio::task::spawn_local(system);
+
+                        let params = UpdateConfigurationParams {
+                            config: "config".to_string().into_bytes(),
+                            version: 1,
+                        };
+
+                        let result = UpdateConfigurationResults {
+                            result: structs::UpdateConfigurationResponse {
+                                err: "error".to_string(),
+                                latest_applied_version: 1,
+                            },
+                        };
+
+                        let h = {
+                            let params = params.clone();
+                            let result = result.clone();
+                            let send_results = send_results.clone();
+                            tokio::spawn(async move {
+                                assert_eq!(recv_params.recv().await.unwrap(), params);
+                                send_results.send(Ok(result)).await.unwrap();
+                                recv_params
+                            })
+                        };
+
+                        let resp = client.update_configuration(params).await;
+                        assert!(resp.is_ok());
+                        assert_eq!(resp.unwrap(), result);
+                        assert!(h.is_finished());
+
+                        let h = h.await;
+                        assert!(h.is_ok());
+
+                        let mut recv_params = h.unwrap();
+
+                        let h = {
+                            let send_results = send_results.clone();
+                            tokio::spawn(async move {
+                                assert_eq!(recv_params.recv().await.unwrap(), Default::default());
+                                send_results
+                                    .send(Err(capnp::Error::failed(
+                                        "failure is tested for".to_string(),
+                                    )))
+                                    .await
+                                    .unwrap();
+                                recv_params
+                            })
+                        };
+
+                        let resp = client.update_configuration(Default::default()).await;
+                        assert!(resp.is_err());
+                        assert_eq!(
+                            resp.unwrap_err().to_string(),
+                            "Failed: remote exception: failure is tested for"
+                        );
+                        assert!(h.is_finished());
+                    })
+                    .await;
+            }
+
+            #[tokio::test]
+            async fn test_client_server_unimplemented() {
+                tokio::task::LocalSet::new()
+                    .run_until(async {
+                        let (client_network, server_network) = setup_mock_networks().await;
+                        let mut system = RpcSystem::new(client_network, None);
+                        let client = client::Client::new_from_system(&mut system);
+                        let client_runner = tokio::task::spawn_local(system);
+
+                        #[derive(Clone)]
+                        struct Server {}
+
+                        #[async_trait]
+                        impl server::Client for Server {}
+
+                        let server_factory: tunnelrpc_capnp::configuration_manager::Client =
+                            capnp_rpc::new_client(Box::<dyn ServerFactory<Server>>::from(
+                                Server {},
+                            ));
+                        let mut system =
+                            RpcSystem::new(server_network, Some(server_factory.client));
+                        let server_runner = tokio::task::spawn_local(system);
+
+                        let resp = client.update_configuration(Default::default()).await;
+                        assert!(resp.is_err());
+                        assert_eq!(
+                            resp.unwrap_err().to_string(),
+                            "Unimplemented: remote exception: unimplemented"
+                        );
+                    })
+                    .await;
             }
         }
     }

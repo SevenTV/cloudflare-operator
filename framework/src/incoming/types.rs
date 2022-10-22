@@ -55,7 +55,6 @@ pub trait HttpStream: Send + Sync {
     )>;
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -64,7 +63,7 @@ mod tests {
     fn thread_safe() {
         // this function basically just exists to make sure the code compiles and that all these types are thread-safe.
         fn _assert_send_sync<T: Send + Sync>() {}
-    
+
         _assert_send_sync::<HttpMethod>();
         _assert_send_sync::<HttpRequest>();
         _assert_send_sync::<HttpResponse>();

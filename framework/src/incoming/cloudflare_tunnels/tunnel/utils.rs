@@ -19,11 +19,12 @@ use crate::incoming::{
     types::{HandleHttp, HttpMethod, HttpRequest, HttpResponse, HttpStream},
 };
 
-use super::super::rpc::{new_network, ControlStreamManager};
+use super::super::rpc::ControlStreamManager;
 
 use generated::capnp::{
     quic_metadata_protocol::primitives,
     quic_metadata_protocol::structs::{ConnectRequest, ConnectResponse, Metadata},
+    rpc::new_network_client,
     tunnelrpc::{
         interfaces::registration_server::{RegisterConnectionParams, UnregisterConnectionParams},
         structs,
@@ -82,7 +83,7 @@ async fn serve_control_stream_single_thread(args: ServeControlStreamSingleThread
         id,
     } = args;
 
-    let (control_stream, system) = ControlStreamManager::new(new_network(send, recv));
+    let (control_stream, system) = ControlStreamManager::new(new_network_client(send, recv));
 
     let mut system_fut = {
         let mut ctx = handle.spawn();

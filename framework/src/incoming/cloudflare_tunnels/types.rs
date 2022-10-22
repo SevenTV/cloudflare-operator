@@ -48,7 +48,10 @@ pub struct TunnelAuth {
 
 impl TunnelAuth {
     pub fn new(token: &str) -> Result<Self> {
-        Ok(serde_json::from_slice(&base64::decode_config(token, base64::URL_SAFE_NO_PAD)?)?)
+        Ok(serde_json::from_slice(&base64::decode_config(
+            token,
+            base64::URL_SAFE_NO_PAD,
+        )?)?)
     }
 
     pub fn set_tunnel_secret(&mut self, secret: &str) {
@@ -56,11 +59,17 @@ impl TunnelAuth {
     }
 
     pub fn tunnel_secret(&self) -> Result<Vec<u8>> {
-        Ok(base64::decode_config(&self.tunnel_secret, base64::URL_SAFE_NO_PAD)?)
+        Ok(base64::decode_config(
+            &self.tunnel_secret,
+            base64::URL_SAFE_NO_PAD,
+        )?)
     }
 
     pub fn encode(&self) -> Result<String> {
-        Ok(base64::encode_config(serde_json::to_string(self)?, base64::URL_SAFE_NO_PAD))
+        Ok(base64::encode_config(
+            serde_json::to_string(self)?,
+            base64::URL_SAFE_NO_PAD,
+        ))
     }
 }
 

@@ -141,7 +141,6 @@ pub(super) async fn get_proto_edge_tls_map() -> Result<HashMap<Protocol, RootCer
     Ok(map)
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
