@@ -1,24 +1,25 @@
 use std::sync::Arc;
+use std::time::Duration;
 
-use ::utils::common::handle_errors;
 use ::utils::context::wait::Context;
-use anyhow::{anyhow, Result};
+use anyhow::{anyhow, Ok, Result};
 use futures::StreamExt;
 use log::info;
 use quinn::{IdleTimeout, TransportConfig, VarInt};
-use tokio::{join, select};
-use tuple_conv::RepeatedTuple;
+use tokio::select;
 use uuid::Uuid;
 
 use crate::incoming::types::HandleHttp;
 
-use super::types::{Protocol, TunnelAuth};
+use self::utils::ControlStreamInfo;
 
-use super::{edge::IpPortHost, tls::RootCert};
+use super::types::{ControlStreamError, Protocol, TunnelAuth};
+
+use super::{edge::IpPortHost, types::RootCert};
 
 pub(super) struct EdgeTunnelClient {
     id: Uuid,
-    idx: u32,
+    idx: u8,
     auth: TunnelAuth,
 
     handle: HandleHttp,
@@ -27,7 +28,7 @@ pub(super) struct EdgeTunnelClient {
 mod utils;
 
 impl EdgeTunnelClient {
-    pub fn new(id: Uuid, idx: u32, auth: TunnelAuth, handle: HandleHttp) -> Self {
+    pub fn new(id: Uuid, idx: u8, auth: TunnelAuth, handle: HandleHttp) -> Self {
         Self {
             id,
             idx,
@@ -42,11 +43,14 @@ impl EdgeTunnelClient {
         protocol: Protocol,
         addr: IpPortHost,
         tls_config: RootCert,
-    ) -> Result<()> {
+        attempt: u8,
+    ) -> Result<Option<ControlStreamError>> {
         let id = self.id;
 
         let resp = match protocol {
-            Protocol::Quic => Ok(self.serve_quic(ctx.clone(), addr, tls_config).await?),
+            Protocol::Quic => Ok(self
+                .serve_quic(ctx.clone(), addr, tls_config, attempt)
+                .await?),
         };
 
         info!("Tunnel client {} is shutting down", id);
@@ -54,12 +58,13 @@ impl EdgeTunnelClient {
         resp
     }
 
-    pub async fn serve_quic(
+    async fn serve_quic(
         self,
         ctx: Context,
         addr: IpPortHost,
         tls_config: RootCert,
-    ) -> Result<()> {
+        attempt: u8,
+    ) -> Result<Option<ControlStreamError>> {
         let client_crypto = tls_config.config;
 
         // not sure why we use the base ipv6 address here however it works.
@@ -88,9 +93,18 @@ impl EdgeTunnelClient {
 
         let (control_fut, local_ctx) = utils::serve_control_stream(
             ctx.clone(),
-            self.id,
-            self.idx as u8,
-            self.auth.clone(),
+            ControlStreamInfo {
+                id: self.id,
+                auth: self.auth.clone(),
+                idx: self.idx,
+                version: "0.0.1".to_string(),
+                arch: std::env::consts::ARCH.to_string(),
+                features: Vec::new(),
+                compression_quality: 0,
+                num_previous_attempts: attempt,
+                origin_local_ip: Vec::new(),
+                timeout: Duration::from_secs(5),
+            },
             send,
             recv,
         );
@@ -115,13 +129,22 @@ impl EdgeTunnelClient {
                     }
                 }
 
-                Ok::<(), anyhow::Error>(())
+                Ok(())
             })
         };
 
-        handle_errors(join!(control_fut, new_streams_fut).to_vec())
-            .map_err(|e| anyhow!("serve quic failed: {:?}", e))?;
+        select! {
+            r = control_fut => {
+                let r = r?;
+                if let Err(e) = r {
+                    return Ok(Some(e));
+                }
+            },
+            r = new_streams_fut => {
+                r??;
+            },
+        }
 
-        Ok(())
+        Ok(None)
     }
 }

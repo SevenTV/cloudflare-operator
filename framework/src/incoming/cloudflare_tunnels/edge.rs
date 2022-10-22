@@ -1,3 +1,4 @@
+use std::collections::VecDeque;
 use std::{collections::HashMap, net::IpAddr, sync::Arc};
 
 use anyhow::anyhow;
@@ -8,17 +9,9 @@ use tokio::sync::Mutex;
 use rand::thread_rng;
 
 #[derive(Clone)]
-pub enum IpVersion {
-    Ipv4,
-    Ipv6,
-}
-
-#[derive(Clone)]
 pub struct IpPortHost {
     pub ip: IpAddr,
     pub port: u16,
-    pub version: IpVersion,
-    pub hostname: String,
 }
 
 impl IpPortHost {
@@ -29,8 +22,8 @@ impl IpPortHost {
 
 #[derive(Clone)]
 pub struct EdgeTracker {
-    mp: Arc<Mutex<HashMap<u32, IpPortHost>>>,
-    pool: Arc<Mutex<Vec<IpPortHost>>>,
+    mp: Arc<Mutex<HashMap<u8, IpPortHost>>>,
+    pool: Arc<Mutex<VecDeque<IpPortHost>>>,
 }
 
 impl EdgeTracker {
@@ -43,21 +36,21 @@ impl EdgeTracker {
 
         Self {
             mp: Arc::new(Mutex::new(HashMap::new())),
-            pool: Arc::new(Mutex::new(pool)),
+            pool: Arc::new(Mutex::new(pool.into())),
         }
     }
 
-    pub async fn release(&mut self, id: &u32) {
+    pub async fn release(&mut self, id: &u8) {
         let mut hash = self.mp.lock().await;
 
         let ip = hash.remove(id);
         if let Some(ip) = ip {
             let mut pool = self.pool.lock().await;
-            pool.push(ip.to_owned());
+            pool.push_back(ip.to_owned());
         }
     }
 
-    pub async fn get(&mut self, id: &u32) -> Result<IpPortHost> {
+    pub async fn get(&mut self, id: &u8) -> Result<IpPortHost> {
         let mut hash = self.mp.lock().await;
 
         let ip = hash.get(id);
@@ -65,7 +58,7 @@ impl EdgeTracker {
             Ok(ip.clone())
         } else {
             let mut pool = self.pool.lock().await;
-            if let Some(ip) = pool.pop() {
+            if let Some(ip) = pool.pop_front() {
                 hash.insert(*id, ip.clone());
                 Ok(ip)
             } else {
@@ -84,12 +77,7 @@ mod tests {
     #[tokio::test]
     async fn test_edge_tracker() {
         let addr = "1.1.1.1".parse().unwrap();
-        let pool = vec![IpPortHost {
-            ip: addr,
-            port: 1,
-            version: IpVersion::Ipv4,
-            hostname: "test".to_string(),
-        }];
+        let pool = vec![IpPortHost { ip: addr, port: 1 }];
 
         let mut tracker = EdgeTracker::new(pool);
 
@@ -116,8 +104,6 @@ mod tests {
         let host = IpPortHost {
             ip: "1.1.1.1".parse().unwrap(),
             port: 1,
-            version: IpVersion::Ipv4,
-            hostname: "test".to_string(),
         };
 
         let socket = host.to_socket_addr();

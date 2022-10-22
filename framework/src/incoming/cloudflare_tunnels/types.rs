@@ -1,11 +1,12 @@
-use std::net::IpAddr;
+use std::{net::IpAddr, time::Duration};
 
 use anyhow::Result;
+use generated::capnp::tunnelrpc::structs::ConnectionError;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 #[derive(Debug, Clone)]
-pub(super) struct EdgeRegion {
+pub struct EdgeRegion {
     pub addrs: Vec<IpAddr>,
     pub hostname: String,
     pub port: u16,
@@ -15,18 +16,37 @@ pub enum EdgeRegionLocation {
     US,
 }
 
-#[derive(Debug, PartialEq, Eq, Hash, Clone)]
-pub(super) enum Protocol {
+#[derive(Clone)]
+pub enum Protocol {
     Quic,
 }
 
-pub(super) struct TLSSettings {
+#[derive(Clone)]
+pub struct ProtocolCerts {
+    pub quic: RootCert,
+}
+
+impl Default for ProtocolCerts {
+    fn default() -> Self {
+        Self {
+            quic: super::tls::cloudflare_root_cert(Protocol::Quic.tls_settings()).unwrap(),
+        }
+    }
+}
+
+#[derive(Clone)]
+pub struct RootCert {
+    pub config: rustls::ClientConfig,
+    pub server_name: String,
+}
+
+pub struct TLSSettings {
     pub server_name: String,
     pub next_protos: Vec<String>,
 }
 
 impl Protocol {
-    pub(super) fn tls_settings(&self) -> TLSSettings {
+    pub fn tls_settings(&self) -> TLSSettings {
         match self {
             Protocol::Quic => TLSSettings {
                 server_name: "quic.cftunnel.com".to_string(),
@@ -36,12 +56,12 @@ impl Protocol {
     }
 }
 
-#[derive(Clone, Serialize, Deserialize, Debug, Default)]
+#[derive(Clone, Serialize, Deserialize, Debug, Default, PartialEq, Eq)]
 pub struct TunnelAuth {
     #[serde(rename = "a")]
     pub account_tag: String,
     #[serde(rename = "s")]
-    tunnel_secret: String, // in base64
+    pub tunnel_secret: String, // in base64
     #[serde(rename = "t")]
     pub tunnel_id: Uuid,
 }
@@ -71,6 +91,13 @@ impl TunnelAuth {
             base64::URL_SAFE_NO_PAD,
         ))
     }
+}
+
+#[derive(Debug)]
+pub(crate) enum ControlStreamError {
+    Timeout(Duration),
+    Connection(ConnectionError),
+    Other(anyhow::Error),
 }
 
 #[cfg(test)]
@@ -121,5 +148,10 @@ mod tests {
         let encoded = auth.encode();
         assert!(encoded.is_ok());
         assert_eq!(encoded.unwrap(), "eyJhIjoiY2ZfYWNjb3VudF90YWciLCJzIjoiYm1WM1gzTmxZM0psZEEiLCJ0IjoiMDAwMDAwMDAtMDAwMC0wMDAwLTAwMDAtMDAwMDAwMDAwMDAwIn0");
+    }
+
+    #[test]
+    fn test_default_protocol_certs() {
+        super::ProtocolCerts::default(); // should not panic
     }
 }

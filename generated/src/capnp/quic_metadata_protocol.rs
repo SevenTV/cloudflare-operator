@@ -1,4 +1,4 @@
-#![allow(dead_code, unused_variables, unused_mut)]
+#![allow(dead_code)]
 
 // This file was not generated and I wrote it.
 // However we should likely invest time to make a generator for this file.
@@ -6,7 +6,7 @@
 use super::raw::quic_metadata_protocol_capnp;
 
 pub mod primitives {
-    #![allow(dead_code, unused_variables, unused_mut)]
+    #![allow(dead_code)]
 
     pub use super::quic_metadata_protocol_capnp::connect_request as ConnectRequest;
     pub use super::quic_metadata_protocol_capnp::connect_response as ConnectResponse;
@@ -76,7 +76,7 @@ pub mod structs {
 
     #[derive(Clone, Debug, PartialEq, Eq)]
     pub struct ConnectResponse {
-        pub error: Option<String>,
+        pub error: String,
         pub metadata: Vec<Metadata>,
     }
 
@@ -84,9 +84,7 @@ pub mod structs {
         pub fn to_primitive(&self, builder: primitives::ConnectResponse::Builder) {
             let mut builder = builder;
 
-            if let Some(error) = &self.error {
-                builder.set_error(error);
-            }
+            builder.set_error(&self.error);
 
             {
                 let b = builder.reborrow().init_metadata(self.metadata.len() as u32);
@@ -100,7 +98,7 @@ pub mod structs {
             let metadata = utils::vec_type_from_primitive!(m, Metadata);
 
             Ok(Self {
-                error: Some(primitive.get_error()?.to_string()),
+                error: primitive.get_error()?.to_string(),
                 metadata,
             })
         }
@@ -112,7 +110,7 @@ pub mod structs {
 
         #[test]
         fn test_connect_request() {
-            let mut m = ConnectRequest {
+            let m = ConnectRequest {
                 dest: "test".to_string(),
                 connection_type: primitives::ConnectionType::Http,
                 metadata: vec![Metadata {
@@ -125,7 +123,7 @@ pub mod structs {
             {
                 let mut message = capnp::message::Builder::new_default();
                 {
-                    let mut builder = message.init_root::<primitives::ConnectRequest::Builder>();
+                    let builder = message.init_root::<primitives::ConnectRequest::Builder>();
                     m.to_primitive(builder);
                 }
                 capnp::serialize::write_message(&mut buf, &message).unwrap();
@@ -145,7 +143,7 @@ pub mod structs {
 
         #[test]
         fn test_metadata() {
-            let mut m = Metadata {
+            let m = Metadata {
                 key: "key".to_string(),
                 val: "val".to_string(),
             };
@@ -154,7 +152,7 @@ pub mod structs {
             {
                 let mut message = capnp::message::Builder::new_default();
                 {
-                    let mut builder = message.init_root::<primitives::Metadata::Builder>();
+                    let builder = message.init_root::<primitives::Metadata::Builder>();
                     m.to_primitive(builder);
                 }
                 capnp::serialize::write_message(&mut buf, &message).unwrap();
@@ -174,8 +172,8 @@ pub mod structs {
 
         #[test]
         fn test_connect_response() {
-            let mut m = ConnectResponse {
-                error: Some("test".to_string()),
+            let m = ConnectResponse {
+                error: "test".to_string(),
                 metadata: vec![Metadata {
                     key: "key".to_string(),
                     val: "val".to_string(),
@@ -186,7 +184,7 @@ pub mod structs {
             {
                 let mut message = capnp::message::Builder::new_default();
                 {
-                    let mut builder = message.init_root::<primitives::ConnectResponse::Builder>();
+                    let builder = message.init_root::<primitives::ConnectResponse::Builder>();
                     m.to_primitive(builder);
                 }
                 capnp::serialize::write_message(&mut buf, &message).unwrap();

@@ -1,10 +1,10 @@
-use std::{collections::HashMap, io::BufReader};
+use std::io::BufReader;
 
 use anyhow::anyhow;
 use anyhow::Result;
 use rustls::Certificate;
 
-use super::types::{Protocol, TLSSettings};
+use super::types::{RootCert, TLSSettings};
 
 // TODO: we should likely get these from the cloudflare api
 // however in the go implementation they are hardcoded
@@ -89,13 +89,7 @@ AnOzKgZk4RzZPNAxCXERVxajn/FLcOhglVAKo5H0ac+AitlQ0ip55D2/mf8o72tM
 fVQ6VpyjEXdiIXWUq/o=
 -----END CERTIFICATE-----";
 
-#[derive(Clone)]
-pub(super) struct RootCert {
-    pub config: rustls::ClientConfig,
-    pub server_name: String,
-}
-
-pub(super) async fn create_tunnel_tls_config(settings: TLSSettings) -> Result<RootCert> {
+pub(super) fn cloudflare_root_cert(settings: TLSSettings) -> Result<RootCert> {
     let config = rustls::ClientConfig::builder().with_safe_defaults();
 
     let mut roots = rustls::RootCertStore::empty();
@@ -130,19 +124,10 @@ fn create_cloudflare_cert_blocks() -> Result<Vec<Certificate>> {
     }
 }
 
-pub(super) async fn get_proto_edge_tls_map() -> Result<HashMap<Protocol, RootCert>> {
-    let mut map = HashMap::new();
-
-    map.insert(
-        Protocol::Quic,
-        create_tunnel_tls_config(Protocol::Quic.tls_settings()).await?,
-    );
-
-    Ok(map)
-}
-
 #[cfg(test)]
 mod tests {
+    use crate::incoming::cloudflare_tunnels::types::Protocol;
+
     use super::*;
 
     #[test]
@@ -154,24 +139,14 @@ mod tests {
         assert_eq!(certs.len(), 3);
     }
 
-    #[tokio::test]
-    async fn test_create_tunnel_tls_config() {
-        let config = create_tunnel_tls_config(Protocol::Quic.tls_settings()).await;
+    #[test]
+    fn test_cloudflare_root_cert_quic() {
+        let config = cloudflare_root_cert(Protocol::Quic.tls_settings());
         assert!(config.is_ok());
 
         let config = config.unwrap();
         assert_eq!(config.server_name, "quic.cftunnel.com");
         assert_eq!(config.config.alpn_protocols.len(), 1);
         assert_eq!(config.config.alpn_protocols[0], b"argotunnel");
-    }
-
-    #[tokio::test]
-    async fn test_get_proto_edge_tls_map() {
-        let map = get_proto_edge_tls_map().await;
-        assert!(map.is_ok());
-
-        let map = map.unwrap();
-        assert_eq!(map.len(), 1);
-        assert!(map.contains_key(&Protocol::Quic));
     }
 }

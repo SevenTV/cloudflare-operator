@@ -57,35 +57,24 @@ where
 
 pub(crate) mod tests {
     use futures::AsyncReadExt;
-    use tokio::net::TcpStream;
 
     use super::*;
 
     #[allow(dead_code)]
     pub async fn setup_mock_networks() -> (Box<dyn VatNetwork<VatId>>, Box<dyn VatNetwork<VatId>>) {
         // Create two networks, one for the server and one for the client
-        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
-        let addr = listener.local_addr().unwrap();
-
-        let h = tokio::spawn(async move {
-            let (conn, _) = listener.accept().await.unwrap();
-
-            conn
-        });
-
-        let client_side = TcpStream::connect(addr).await.unwrap();
-        let server_side = h.await.unwrap();
+        let (client, server) = tokio::io::duplex(64);
 
         let client_network = {
             let (recv, send) =
-                tokio_util::compat::TokioAsyncReadCompatExt::compat(client_side).split();
+                tokio_util::compat::TokioAsyncReadCompatExt::compat(client).split();
 
             new_network_client(send, recv)
         };
 
         let server_network = {
             let (recv, send) =
-                tokio_util::compat::TokioAsyncReadCompatExt::compat(server_side).split();
+                tokio_util::compat::TokioAsyncReadCompatExt::compat(server).split();
 
             new_network_server(send, recv)
         };

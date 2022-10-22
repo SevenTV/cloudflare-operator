@@ -6,7 +6,7 @@ use async_trait::async_trait;
 use framework::api;
 
 use framework::incoming::cloudflare_tunnels::types as cloudflare_tunnels;
-use framework::incoming::cloudflare_tunnels::Supervisor;
+use framework::incoming::cloudflare_tunnels::{resolve_edge_addr, Supervisor};
 use framework::incoming::types as incoming;
 
 use crate::app::ingress::router::types::*;
@@ -37,6 +37,8 @@ struct RunningTunnel {
     auth: cloudflare_tunnels::TunnelAuth,
 }
 
+const CONNS_PER_TUNNEL: u8 = 4;
+
 impl RunningTunnel {
     pub fn new(inst_id: Uuid, auth: cloudflare_tunnels::TunnelAuth) -> Self {
         Self {
@@ -65,8 +67,9 @@ impl RunningTunnel {
                     _ = async{} => {
                         info!("starting tunnel");
                         let result = async {
-                            let supervisor = Supervisor::new(id, &cloudflare_tunnels::EdgeRegionLocation::AUTO, auth.clone(), Box::new(Arc::new(RunningTunnelHandle(rules.clone())))).await?;
-                            supervisor.start(ctx.clone()).await
+                            let edges = resolve_edge_addr(cloudflare_tunnels::EdgeRegionLocation::AUTO).await?;
+                            let supervisor = Supervisor::new(id, edges, auth.clone(), Default::default(), Box::new(Arc::new(RunningTunnelHandle(rules.clone())))).await?;
+                            supervisor.start(ctx.clone(), CONNS_PER_TUNNEL).await
                         }.await;
 
                         if let Err(e) = result {
