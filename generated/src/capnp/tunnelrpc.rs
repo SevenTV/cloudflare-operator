@@ -2,6 +2,12 @@
 
 // This file was not generated and I wrote it.
 // However we should likely invest time to make a generator for this file.
+// This file is not required to handle capnp messages, however the raw capnp messages are so annoying to work with
+// that I wrote this file to make it easier to work with.
+// This file is essentially wrappers for capnp messages to convert them into rust structs.
+// Also for capnp rpc client/server to provide async functions to send and receive messages, from the struct wrappers (mentioned above).
+// The unfortunate reality is the Capnp Rust Library is not very good, and thus each server/client connection must be run on a single thread.
+// However this isnt that bad, because we can run a thread per connection. Since capnp is a binary protocol, the way we get the data doesnt matter.
 
 use super::raw::tunnelrpc_capnp;
 pub mod primitives {
