@@ -1,4 +1,10 @@
-use std::{future::Future, pin::Pin, sync::Arc, time::Duration, fmt::{Formatter, Debug}};
+use std::{
+    fmt::{Debug, Formatter},
+    future::Future,
+    pin::Pin,
+    sync::Arc,
+    time::Duration,
+};
 
 use super::{Context as TokioContext, Handle as TokioHandle, RefContext};
 
@@ -10,8 +16,7 @@ pub struct Context {
 
 impl Debug for Context {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("Context")
-            .finish()
+        f.debug_struct("Context").finish()
     }
 }
 
@@ -34,8 +39,7 @@ pub struct Handle {
 
 impl Debug for Handle {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("Handle")
-            .finish()
+        f.debug_struct("Handle").finish()
     }
 }
 

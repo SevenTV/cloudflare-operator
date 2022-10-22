@@ -79,7 +79,6 @@ impl RunningTunnel {
                             info!("Tunnel {} stopped", id);
                         }
 
-                        // TODO: wait a bit before trying again
                         select! {
                             _ = ctx.done() => {
                                 info!("context dropped, stopping tunnel");

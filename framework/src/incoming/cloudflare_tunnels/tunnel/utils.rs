@@ -145,9 +145,7 @@ async fn serve_control_stream_single_thread<
                 .register_connection(RegisterConnectionParams {
                     auth: structs::TunnelAuth {
                         account_tag: auth.account_tag.clone(),
-                        tunnel_secret: auth
-                            .tunnel_secret()
-                            .map_err(ControlStreamError::Other)?,
+                        tunnel_secret: auth.tunnel_secret().map_err(ControlStreamError::Other)?,
                     },
                     tunnel_id: auth.tunnel_id.into_bytes().to_vec(),
                     conn_index: idx,
@@ -173,7 +171,6 @@ async fn serve_control_stream_single_thread<
                         info!("Registered connection: {:?}", details);
                     }
                     structs::ConnectionResponseResult::Error(e) => {
-                        // TODO we should look at the error and decide if we should retry...
                         return Err(ControlStreamError::Connection(e));
                     }
                 }
@@ -249,14 +246,8 @@ pub async fn serve_stream<
 ) {
     let (send, mut recv) = stream;
 
-    // tokio::time::timeout(duration, f).await
-    
-    
     let result: Result<()> = async move {
-        match tokio::time::timeout(
-            Duration::from_secs(2),
-            determine_protocol(&mut recv),
-        ).await?? {
+        match tokio::time::timeout(Duration::from_secs(2), determine_protocol(&mut recv)).await?? {
             Protocol::RPCStream => Err(anyhow!("unimplemented")),
             Protocol::DataStream => {
                 let mut buf = [0u8; 2];
@@ -265,18 +256,19 @@ pub async fn serve_stream<
                 let mut recv = tokio_util::compat::TokioAsyncReadCompatExt::compat(recv);
 
                 let request = ConnectRequest::from_primitive(
-                    tokio::time::timeout(Duration::from_secs(2), capnp_futures::serialize::read_message(
-                        &mut recv,
-                        capnp::message::ReaderOptions::new(),
-                    ))
+                    tokio::time::timeout(
+                        Duration::from_secs(2),
+                        capnp_futures::serialize::read_message(
+                            &mut recv,
+                            capnp::message::ReaderOptions::new(),
+                        ),
+                    )
                     .await??
                     .get_root()?,
                 )?;
 
                 let recv = recv.into_inner();
 
-                // https://example.com/abc
-                // "https:" "" "example.com" "abc"
                 let mut req = HttpRequest {
                     method: HttpMethod::GET,
                     path: "".to_string(),
@@ -314,10 +306,14 @@ pub async fn serve_stream<
                 }
 
                 if request.dest.starts_with("https://") {
-                    req.path = request.dest[8..].trim_start_matches(&req.hostname).to_string();
+                    req.path = request.dest[8..]
+                        .trim_start_matches(&req.hostname)
+                        .to_string();
                     req.is_tls = true;
                 } else if request.dest.starts_with("http://") {
-                    req.path = request.dest[7..].trim_start_matches(&req.hostname).to_string();
+                    req.path = request.dest[7..]
+                        .trim_start_matches(&req.hostname)
+                        .to_string();
                 } else {
                     return Err(anyhow!("invalid dest: {}", request.dest));
                 }
@@ -377,25 +373,25 @@ impl<
             let recv = &mut self.recv;
             send.write_all(&DATA_STREAM_SIGNATURE).await?;
             send.write_all(&self.version).await?;
-    
+
             let mut is_err = false;
-    
+
             let response = match resp {
                 Ok(resp) => {
                     let mut metadata = Vec::new();
-    
+
                     for (key, val) in resp.headers {
                         metadata.push(Metadata {
                             key: format!("HttpHeader:{}", key),
                             val,
                         });
                     }
-    
+
                     metadata.push(Metadata {
                         key: "HttpStatus".to_string(),
                         val: format!("{}", resp.status),
                     });
-    
+
                     ConnectResponse {
                         error: "".to_string(),
                         metadata,
@@ -403,29 +399,31 @@ impl<
                 }
                 Err(e) => {
                     is_err = true;
-    
+
                     ConnectResponse {
                         error: format!("{:#}", e),
                         metadata: Vec::new(),
                     }
                 }
             };
-    
+
             let mut builder = TypedBuilder::<primitives::ConnectResponse::Owned>::new_default();
             response.to_primitive(builder.init_root());
-    
+
             let mut send = tokio_util::compat::TokioAsyncWriteCompatExt::compat_write(send);
-    
+
             capnp_futures::serialize::write_message(&mut send, builder.into_inner()).await?;
-    
+
             let send = send.into_inner();
-    
+
             if is_err {
                 Err(anyhow!("error in response"))
             } else {
                 Ok((recv, send))
             }
-        }).await.map_err(|_| anyhow!("decompose timeout"))??;
+        })
+        .await
+        .map_err(|_| anyhow!("decompose timeout"))??;
 
         Ok((recv, send))
     }
@@ -779,7 +777,6 @@ mod tests {
         let h = h.await;
         assert!(h.is_ok());
 
-        // we should check this error...
         let h = h.unwrap();
         assert!(h.is_err());
 
@@ -832,7 +829,6 @@ mod tests {
         let h = h.await;
         assert!(h.is_ok());
 
-        // we should check this error...
         let h = h.unwrap();
         assert!(h.is_ok());
 
@@ -848,13 +844,22 @@ mod tests {
         };
     }
 
-    fn setup_serve_stream<T: AsyncRead + AsyncWrite + Sized + Sync + Send + 'static>(client: T) -> (Handle, JoinHandle<()>, (Receiver<(Context, HttpRequest, Box<dyn HttpStream>)>, Sender<(Context, Result<()>)>)) {
+    fn setup_serve_stream<T: AsyncRead + AsyncWrite + Sized + Sync + Send + 'static>(
+        client: T,
+    ) -> (
+        Handle,
+        JoinHandle<()>,
+        (
+            Receiver<(Context, HttpRequest, Box<dyn HttpStream>)>,
+            Sender<(Context, Result<()>)>,
+        ),
+    ) {
         let mut handle = Handle::new();
 
         let (send_req, recv_req) = tokio::sync::mpsc::channel(1);
         let (send_resp, recv_resp) = tokio::sync::mpsc::channel(1);
 
-        struct HttpHandle{
+        struct HttpHandle {
             send_req: tokio::sync::mpsc::Sender<(Context, HttpRequest, Box<dyn HttpStream>)>,
             recv_resp: Arc<Mutex<tokio::sync::mpsc::Receiver<(Context, Result<()>)>>>,
         }
@@ -867,7 +872,10 @@ mod tests {
                 req: HttpRequest,
                 stream: Box<dyn HttpStream>,
             ) -> Result<()> {
-                self.send_req.send((ctx, req, stream)).await.map_err(|_| anyhow!("send failed"))?;
+                self.send_req
+                    .send((ctx, req, stream))
+                    .await
+                    .map_err(|_| anyhow!("send failed"))?;
                 self.recv_resp.lock().await.recv().await.unwrap().1
             }
         }
@@ -901,23 +909,28 @@ mod tests {
         // now we should be able to write the request
         let mut msg = capnp::message::Builder::new_default();
         let body = msg.init_root::<primitives::ConnectRequest::Builder>();
-        let req = ConnectRequest{
+        let req = ConnectRequest {
             connection_type: primitives::ConnectionType::Http,
             dest: "https://test.com/abc".to_string(),
-            metadata: vec![Metadata{
-                key: "HttpHost".to_string(),
-                val: "test.com".to_string(),
-            }, Metadata{
-                key: "HttpMethod".to_string(),
-                val: "GET".to_string(),
-            }],
+            metadata: vec![
+                Metadata {
+                    key: "HttpHost".to_string(),
+                    val: "test.com".to_string(),
+                },
+                Metadata {
+                    key: "HttpMethod".to_string(),
+                    val: "GET".to_string(),
+                },
+            ],
         };
 
         req.to_primitive(body);
 
         let mut server = tokio_util::compat::TokioAsyncWriteCompatExt::compat_write(server);
 
-        assert!(capnp_futures::serialize::write_message(&mut server, &msg).await.is_ok());
+        assert!(capnp_futures::serialize::write_message(&mut server, &msg)
+            .await
+            .is_ok());
 
         let (ctx, req, mut stream) = recv_req.recv().await.unwrap();
         assert!(!req.is_websocket);
@@ -929,22 +942,22 @@ mod tests {
         assert_eq!(req.headers[0].1, "test.com");
         assert!(req.is_tls);
 
-        let resp = HttpResponse{
+        let resp = HttpResponse {
             status: 200,
             headers: Vec::new(),
         };
 
         let server = tokio::spawn(async move {
-             // we should be able to read the response
+            // we should be able to read the response
             let mut server = server.into_inner();
             let protocol = determine_protocol(&mut server).await;
             assert!(protocol.is_ok());
             assert_eq!(protocol.unwrap(), Protocol::DataStream);
-            
+
             let mut buf = [0u8; 2];
             assert!(server.read_exact(&mut buf).await.is_ok());
             assert_eq!(buf.to_vec(), version);
-            
+
             let mut server = tokio_util::compat::TokioAsyncReadCompatExt::compat(server);
             let msg = capnp_futures::serialize::read_message(&mut server, Default::default()).await;
             assert!(msg.is_ok());
@@ -961,7 +974,9 @@ mod tests {
             assert_eq!(resp.metadata[0].val, "200");
         });
 
-        let streams = stream.decompose(Duration::from_secs(1), Ok(resp.clone())).await;
+        let streams = stream
+            .decompose(Duration::from_secs(1), Ok(resp.clone()))
+            .await;
         assert!(streams.is_ok());
 
         tokio::time::sleep(Duration::from_millis(10)).await;

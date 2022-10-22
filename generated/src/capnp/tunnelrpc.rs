@@ -613,8 +613,7 @@ pub mod structs {
             };
 
             let mut message = capnp::message::Builder::new_default();
-            let builder =
-                message.init_root::<super::primitives::RegistrationOptions::Builder>();
+            let builder = message.init_root::<super::primitives::RegistrationOptions::Builder>();
             registration_options.to_primitive(builder);
             let reader = message
                 .get_root_as_reader::<super::primitives::RegistrationOptions::Reader>()
@@ -666,8 +665,7 @@ pub mod structs {
             };
 
             let mut message = capnp::message::Builder::new_default();
-            let builder =
-                message.init_root::<super::primitives::AuthenticationResponse::Builder>();
+            let builder = message.init_root::<super::primitives::AuthenticationResponse::Builder>();
             authentication_response.to_primitive(builder);
             let reader = message
                 .get_root_as_reader::<super::primitives::AuthenticationResponse::Reader>()
@@ -714,7 +712,7 @@ pub mod structs {
             let mut message = capnp::message::Builder::new_default();
             let builder = message.init_root::<super::primitives::ConnectionOptions::Builder>();
             connection_options.to_primitive(builder);
-            let reader  = message
+            let reader = message
                 .get_root_as_reader::<super::primitives::ConnectionOptions::Reader>()
                 .unwrap();
             let connection_options2 = super::ConnectionOptions::from_primitive(reader).unwrap();
@@ -734,7 +732,7 @@ pub mod structs {
             let mut message = capnp::message::Builder::new_default();
             let builder = message.init_root::<super::primitives::ConnectionResponse::Builder>();
             connection_response.to_primitive(builder);
-            let reader  = message
+            let reader = message
                 .get_root_as_reader::<super::primitives::ConnectionResponse::Reader>()
                 .unwrap();
             let connection_response2 = super::ConnectionResponse::from_primitive(reader).unwrap();
@@ -751,7 +749,7 @@ pub mod structs {
             let mut message = capnp::message::Builder::new_default();
             let builder = message.init_root::<super::primitives::ConnectionResponse::Builder>();
             connection_response.to_primitive(builder);
-            let reader  = message
+            let reader = message
                 .get_root_as_reader::<super::primitives::ConnectionResponse::Reader>()
                 .unwrap();
             let connection_response2 = super::ConnectionResponse::from_primitive(reader).unwrap();
@@ -769,7 +767,7 @@ pub mod structs {
             let mut message = capnp::message::Builder::new_default();
             let builder = message.init_root::<super::primitives::ConnectionDetails::Builder>();
             connection_details.to_primitive(builder);
-            let reader  = message
+            let reader = message
                 .get_root_as_reader::<super::primitives::ConnectionDetails::Reader>()
                 .unwrap();
             let connection_details2 = super::ConnectionDetails::from_primitive(reader).unwrap();
@@ -787,7 +785,7 @@ pub mod structs {
             let mut message = capnp::message::Builder::new_default();
             let builder = message.init_root::<super::primitives::ConnectionError::Builder>();
             connection_error.to_primitive(builder);
-            let reader  = message
+            let reader = message
                 .get_root_as_reader::<super::primitives::ConnectionError::Reader>()
                 .unwrap();
             let connection_error2 = super::ConnectionError::from_primitive(reader).unwrap();
@@ -804,7 +802,7 @@ pub mod structs {
             let mut message = capnp::message::Builder::new_default();
             let builder = message.init_root::<super::primitives::TunnelAuth::Builder>();
             tunnel_auth.to_primitive(builder);
-            let reader  = message
+            let reader = message
                 .get_root_as_reader::<super::primitives::TunnelAuth::Reader>()
                 .unwrap();
             let tunnel_auth2 = super::TunnelAuth::from_primitive(reader).unwrap();
@@ -822,7 +820,7 @@ pub mod structs {
             let builder =
                 message.init_root::<super::primitives::RegisterUdpSessionResponse::Builder>();
             register_udp_session_response.to_primitive(builder);
-            let reader  = message
+            let reader = message
                 .get_root_as_reader::<super::primitives::RegisterUdpSessionResponse::Reader>()
                 .unwrap();
             let register_udp_session_response2 =
@@ -844,7 +842,7 @@ pub mod structs {
             let builder =
                 message.init_root::<super::primitives::UpdateConfigurationResponse::Builder>();
             update_tunnel_response.to_primitive(builder);
-            let reader  = message
+            let reader = message
                 .get_root_as_reader::<super::primitives::UpdateConfigurationResponse::Reader>()
                 .unwrap();
             let update_tunnel_response2 =
@@ -1156,7 +1154,7 @@ pub mod interfaces {
                 let builder =
                     message.init_root::<super::primitives::RegisterConnectionParams::Builder>();
                 register_connection_params.to_primitive(builder);
-                let reader  = message
+                let reader = message
                     .get_root_as_reader::<super::primitives::RegisterConnectionParams::Reader>()
                     .unwrap();
                 let register_connection_params2 =
@@ -1180,7 +1178,7 @@ pub mod interfaces {
                 let builder =
                     message.init_root::<super::primitives::RegisterConnectionResults::Builder>();
                 register_connection_request.to_primitive(builder);
-                let reader  = message
+                let reader = message
                     .get_root_as_reader::<super::primitives::RegisterConnectionResults::Reader>()
                     .unwrap();
                 let register_connection_request2 =
@@ -1196,7 +1194,7 @@ pub mod interfaces {
                 let builder =
                     message.init_root::<super::primitives::UnregisterConnectionParams::Builder>();
                 unregister_connection_params.to_primitive(builder);
-                let reader  = message
+                let reader = message
                     .get_root_as_reader::<super::primitives::UnregisterConnectionParams::Reader>()
                     .unwrap();
                 let unregister_connection_params2 =
@@ -1212,7 +1210,7 @@ pub mod interfaces {
                 let builder =
                     message.init_root::<super::primitives::UnregisterConnectionResults::Builder>();
                 unregister_connection_results.to_primitive(builder);
-                let reader  = message
+                let reader = message
                     .get_root_as_reader::<super::primitives::UnregisterConnectionResults::Reader>()
                     .unwrap();
                 let unregister_connection_results2 =
@@ -1250,8 +1248,7 @@ pub mod interfaces {
 
                 let mut message = capnp::message::Builder::new_default();
                 let builder = message
-                    .init_root::<super::primitives::UpdateLocalConfigurationResults::Builder>(
-                );
+                    .init_root::<super::primitives::UpdateLocalConfigurationResults::Builder>();
                 update_local_configuration_results.to_primitive(builder);
                 let reader  = message
                     .get_root_as_reader::<super::primitives::UpdateLocalConfigurationResults::Reader>()
@@ -2132,7 +2129,7 @@ pub mod interfaces {
                 let mut message = capnp::message::Builder::new_default();
                 let builder = message.init_root::<primitives::RegisterTunnelParams::Builder>();
                 params.to_primitive(builder);
-                let reader  = message
+                let reader = message
                     .get_root_as_reader::<super::primitives::RegisterTunnelParams::Reader>()
                     .unwrap();
                 let params2 = super::RegisterTunnelParams::from_primitive(reader).unwrap();
@@ -2157,7 +2154,7 @@ pub mod interfaces {
                 let mut message = capnp::message::Builder::new_default();
                 let builder = message.init_root::<primitives::RegisterTunnelResults::Builder>();
                 results.to_primitive(builder);
-                let reader  = message
+                let reader = message
                     .get_root_as_reader::<super::primitives::RegisterTunnelResults::Reader>()
                     .unwrap();
                 let results2 = super::RegisterTunnelResults::from_primitive(reader).unwrap();
@@ -2170,7 +2167,7 @@ pub mod interfaces {
                 let mut message = capnp::message::Builder::new_default();
                 let builder = message.init_root::<primitives::GetServerInfoParams::Builder>();
                 params.to_primitive(builder);
-                let reader  = message
+                let reader = message
                     .get_root_as_reader::<super::primitives::GetServerInfoParams::Reader>()
                     .unwrap();
                 let params2 = super::GetServerInfoParams::from_primitive(reader).unwrap();
@@ -2188,7 +2185,7 @@ pub mod interfaces {
                 let mut message = capnp::message::Builder::new_default();
                 let builder = message.init_root::<primitives::GetServerInfoResults::Builder>();
                 results.to_primitive(builder);
-                let reader  = message
+                let reader = message
                     .get_root_as_reader::<super::primitives::GetServerInfoResults::Reader>()
                     .unwrap();
                 let results2 = super::GetServerInfoResults::from_primitive(reader).unwrap();
@@ -2202,10 +2199,9 @@ pub mod interfaces {
                 };
 
                 let mut message = capnp::message::Builder::new_default();
-                let builder =
-                    message.init_root::<primitives::UnregisterTunnelParams::Builder>();
+                let builder = message.init_root::<primitives::UnregisterTunnelParams::Builder>();
                 params.to_primitive(builder);
-                let reader  = message
+                let reader = message
                     .get_root_as_reader::<super::primitives::UnregisterTunnelParams::Reader>()
                     .unwrap();
                 let params2 = super::UnregisterTunnelParams::from_primitive(reader).unwrap();
@@ -2217,10 +2213,9 @@ pub mod interfaces {
                 let results = UnregisterTunnelResults {};
 
                 let mut message = capnp::message::Builder::new_default();
-                let builder =
-                    message.init_root::<primitives::UnregisterTunnelResults::Builder>();
+                let builder = message.init_root::<primitives::UnregisterTunnelResults::Builder>();
                 results.to_primitive(builder);
-                let reader  = message
+                let reader = message
                     .get_root_as_reader::<super::primitives::UnregisterTunnelResults::Reader>()
                     .unwrap();
                 let results2 = super::UnregisterTunnelResults::from_primitive(reader).unwrap();
@@ -2233,8 +2228,7 @@ pub mod interfaces {
 
                 let mut message = capnp::message::Builder::new_default();
                 let builder = message
-                    .init_root::<primitives::ObsoleteDeclarativeTunnelConnectParams::Builder>(
-                );
+                    .init_root::<primitives::ObsoleteDeclarativeTunnelConnectParams::Builder>();
                 params.to_primitive(builder);
                 let reader  = message
                     .get_root_as_reader::<super::primitives::ObsoleteDeclarativeTunnelConnectParams::Reader>()
@@ -2250,8 +2244,7 @@ pub mod interfaces {
 
                 let mut message = capnp::message::Builder::new_default();
                 let builder = message
-                    .init_root::<primitives::ObsoleteDeclarativeTunnelConnectResults::Builder>(
-                );
+                    .init_root::<primitives::ObsoleteDeclarativeTunnelConnectResults::Builder>();
                 results.to_primitive(builder);
                 let reader  = message
                     .get_root_as_reader::<super::primitives::ObsoleteDeclarativeTunnelConnectResults::Reader>()
@@ -2290,7 +2283,7 @@ pub mod interfaces {
                 let mut message = capnp::message::Builder::new_default();
                 let builder = message.init_root::<primitives::AuthenticateParams::Builder>();
                 params.to_primitive(builder);
-                let reader  = message
+                let reader = message
                     .get_root_as_reader::<super::primitives::AuthenticateParams::Reader>()
                     .unwrap();
                 let params2 = super::AuthenticateParams::from_primitive(reader).unwrap();
@@ -2311,7 +2304,7 @@ pub mod interfaces {
                 let mut message = capnp::message::Builder::new_default();
                 let builder = message.init_root::<primitives::AuthenticateResults::Builder>();
                 results.to_primitive(builder);
-                let reader  = message
+                let reader = message
                     .get_root_as_reader::<super::primitives::AuthenticateResults::Reader>()
                     .unwrap();
                 let results2 = super::AuthenticateResults::from_primitive(reader).unwrap();
@@ -2349,7 +2342,7 @@ pub mod interfaces {
                 let mut message = capnp::message::Builder::new_default();
                 let builder = message.init_root::<primitives::ReconnectTunnelParams::Builder>();
                 params.to_primitive(builder);
-                let reader  = message
+                let reader = message
                     .get_root_as_reader::<super::primitives::ReconnectTunnelParams::Reader>()
                     .unwrap();
                 let params2 = super::ReconnectTunnelParams::from_primitive(reader).unwrap();
@@ -2372,10 +2365,9 @@ pub mod interfaces {
                 };
 
                 let mut message = capnp::message::Builder::new_default();
-                let builder =
-                    message.init_root::<primitives::ReconnectTunnelResults::Builder>();
+                let builder = message.init_root::<primitives::ReconnectTunnelResults::Builder>();
                 results.to_primitive(builder);
-                let reader  = message
+                let reader = message
                     .get_root_as_reader::<super::primitives::ReconnectTunnelResults::Reader>()
                     .unwrap();
                 let results2 = super::ReconnectTunnelResults::from_primitive(reader).unwrap();
@@ -2423,8 +2415,7 @@ pub mod interfaces {
                             recv: Arc::new(Mutex::new(recv_results)),
                         }
                         .build();
-                        let system =
-                            RpcSystem::new(server_network, Some(server_factory.client));
+                        let system = RpcSystem::new(server_network, Some(server_factory.client));
                         let _server_runner = tokio::task::spawn_local(system);
 
                         let params = RegisterTunnelParams {
@@ -2546,8 +2537,7 @@ pub mod interfaces {
                             recv: Arc::new(Mutex::new(recv_results)),
                         }
                         .build();
-                        let system =
-                            RpcSystem::new(server_network, Some(server_factory.client));
+                        let system = RpcSystem::new(server_network, Some(server_factory.client));
                         let _server_runner = tokio::task::spawn_local(system);
 
                         let params = GetServerInfoParams {};
@@ -2640,8 +2630,7 @@ pub mod interfaces {
                             recv: Arc::new(Mutex::new(recv_results)),
                         }
                         .build();
-                        let system =
-                            RpcSystem::new(server_network, Some(server_factory.client));
+                        let system = RpcSystem::new(server_network, Some(server_factory.client));
                         let _server_runner = tokio::task::spawn_local(system);
 
                         let params = UnregisterTunnelParams {
@@ -2734,8 +2723,7 @@ pub mod interfaces {
                             recv: Arc::new(Mutex::new(recv_results)),
                         }
                         .build();
-                        let system =
-                            RpcSystem::new(server_network, Some(server_factory.client));
+                        let system = RpcSystem::new(server_network, Some(server_factory.client));
                         let _server_runner = tokio::task::spawn_local(system);
 
                         let params = ObsoleteDeclarativeTunnelConnectParams {};
@@ -2824,8 +2812,7 @@ pub mod interfaces {
                             recv: Arc::new(Mutex::new(recv_results)),
                         }
                         .build();
-                        let system =
-                            RpcSystem::new(server_network, Some(server_factory.client));
+                        let system = RpcSystem::new(server_network, Some(server_factory.client));
                         let _server_runner = tokio::task::spawn_local(system);
 
                         let params = AuthenticateParams {
@@ -2942,8 +2929,7 @@ pub mod interfaces {
                             recv: Arc::new(Mutex::new(recv_results)),
                         }
                         .build();
-                        let system =
-                            RpcSystem::new(server_network, Some(server_factory.client));
+                        let system = RpcSystem::new(server_network, Some(server_factory.client));
                         let _server_runner = tokio::task::spawn_local(system);
 
                         let params = ReconnectTunnelParams {
@@ -3052,8 +3038,7 @@ pub mod interfaces {
                         impl registration_server::server::Client for Factory {}
 
                         let server_factory = Factory {}.build();
-                        let system =
-                            RpcSystem::new(server_network, Some(server_factory.client));
+                        let system = RpcSystem::new(server_network, Some(server_factory.client));
                         let _server_runner = tokio::task::spawn_local(system);
 
                         let resp = client.register_tunnel(Default::default()).await;
@@ -3320,10 +3305,9 @@ pub mod interfaces {
                 };
 
                 let mut message = capnp::message::Builder::new_default();
-                let builder =
-                    message.init_root::<primitives::RegisterUdpSessionParams::Builder>();
+                let builder = message.init_root::<primitives::RegisterUdpSessionParams::Builder>();
                 params.to_primitive(builder);
-                let reader  = message
+                let reader = message
                     .get_root_as_reader::<super::primitives::RegisterUdpSessionParams::Reader>()
                     .unwrap();
                 let params2 = super::RegisterUdpSessionParams::from_primitive(reader).unwrap();
@@ -3340,10 +3324,9 @@ pub mod interfaces {
                 };
 
                 let mut message = capnp::message::Builder::new_default();
-                let builder =
-                    message.init_root::<primitives::RegisterUdpSessionResults::Builder>();
+                let builder = message.init_root::<primitives::RegisterUdpSessionResults::Builder>();
                 results.to_primitive(builder);
-                let reader  = message
+                let reader = message
                     .get_root_as_reader::<super::primitives::RegisterUdpSessionResults::Reader>()
                     .unwrap();
                 let results2 = super::RegisterUdpSessionResults::from_primitive(reader).unwrap();
@@ -3361,7 +3344,7 @@ pub mod interfaces {
                 let builder =
                     message.init_root::<primitives::UnregisterUdpSessionParams::Builder>();
                 params.to_primitive(builder);
-                let reader  = message
+                let reader = message
                     .get_root_as_reader::<super::primitives::UnregisterUdpSessionParams::Reader>()
                     .unwrap();
                 let params2 = super::UnregisterUdpSessionParams::from_primitive(reader).unwrap();
@@ -3376,7 +3359,7 @@ pub mod interfaces {
                 let builder =
                     message.init_root::<primitives::UnregisterUdpSessionResults::Builder>();
                 results.to_primitive(builder);
-                let reader  = message
+                let reader = message
                     .get_root_as_reader::<super::primitives::UnregisterUdpSessionResults::Reader>()
                     .unwrap();
                 let results2 = super::UnregisterUdpSessionResults::from_primitive(reader).unwrap();
@@ -3422,8 +3405,7 @@ pub mod interfaces {
                             recv: Arc::new(Mutex::new(recv_results)),
                         }
                         .build();
-                        let system =
-                            RpcSystem::new(server_network, Some(server_factory.client));
+                        let system = RpcSystem::new(server_network, Some(server_factory.client));
                         let _server_runner = tokio::task::spawn_local(system);
 
                         let params = RegisterUdpSessionParams {
@@ -3519,8 +3501,7 @@ pub mod interfaces {
                             recv: Arc::new(Mutex::new(recv_results)),
                         }
                         .build();
-                        let system =
-                            RpcSystem::new(server_network, Some(server_factory.client));
+                        let system = RpcSystem::new(server_network, Some(server_factory.client));
                         let _server_runner = tokio::task::spawn_local(system);
 
                         let params = UnregisterUdpSessionParams {
@@ -3594,8 +3575,7 @@ pub mod interfaces {
                         impl Client for Server {}
 
                         let server_factory = Server {}.build();
-                        let system =
-                            RpcSystem::new(server_network, Some(server_factory.client));
+                        let system = RpcSystem::new(server_network, Some(server_factory.client));
                         let _server_runner = tokio::task::spawn_local(system);
 
                         let resp = client.register_udp_session(Default::default()).await;
@@ -3758,10 +3738,9 @@ pub mod interfaces {
                 };
 
                 let mut message = capnp::message::Builder::new_default();
-                let builder =
-                    message.init_root::<primitives::UpdateConfigurationParams::Builder>();
+                let builder = message.init_root::<primitives::UpdateConfigurationParams::Builder>();
                 params.to_primitive(builder);
-                let reader  = message
+                let reader = message
                     .get_root_as_reader::<super::primitives::UpdateConfigurationParams::Reader>()
                     .unwrap();
                 let params2 = super::UpdateConfigurationParams::from_primitive(reader).unwrap();
@@ -3781,7 +3760,7 @@ pub mod interfaces {
                 let builder =
                     message.init_root::<primitives::UpdateConfigurationResults::Builder>();
                 results.to_primitive(builder);
-                let reader  = message
+                let reader = message
                     .get_root_as_reader::<super::primitives::UpdateConfigurationResults::Reader>()
                     .unwrap();
                 let results2 = super::UpdateConfigurationResults::from_primitive(reader).unwrap();
@@ -3918,6 +3897,100 @@ pub mod interfaces {
                             resp.unwrap_err().to_string(),
                             "Unimplemented: remote exception: unimplemented"
                         );
+                    })
+                    .await;
+            }
+        }
+    }
+
+    pub mod cloudflared_server {
+        use crate::capnp::{
+            raw::tunnelrpc_capnp,
+            rpc::ServerFactory,
+            tunnelrpc::interfaces::{configuration_manager, session_manager},
+        };
+        use async_trait::async_trait;
+        use capnp_rpc::{twoparty::VatId, RpcSystem};
+
+        pub mod client {
+            use super::*;
+
+            #[derive(Clone)]
+            pub struct Client {
+                inner: tunnelrpc_capnp::cloudflared_server::Client,
+            }
+
+            impl Client {
+                pub fn new(inner: tunnelrpc_capnp::cloudflared_server::Client) -> Self {
+                    Self { inner }
+                }
+
+                pub fn new_from_system(system: &mut RpcSystem<VatId>) -> Self {
+                    Self::new(system.bootstrap(VatId::Server))
+                }
+            }
+        }
+
+        pub mod server {
+            use super::*;
+
+            #[async_trait]
+            pub trait Client: Send + Sync {
+                fn build(self) -> tunnelrpc_capnp::configuration_manager::Client
+                where
+                    Self: session_manager::server::Client
+                        + configuration_manager::server::Client
+                        + Sized
+                        + Clone
+                        + 'static,
+                {
+                    capnp_rpc::new_client(Box::<dyn ServerFactory<Self>>::from(self))
+                }
+            }
+
+            impl<
+                    T: Client
+                        + session_manager::server::Client
+                        + configuration_manager::server::Client
+                        + Clone
+                        + 'static,
+                > tunnelrpc_capnp::cloudflared_server::Server for Box<dyn ServerFactory<T>>
+            {
+            }
+        }
+    
+        #[cfg(test)]
+        mod tests {
+            use super::*;
+            use crate::capnp::rpc::tests::setup_mock_networks;
+
+            #[tokio::test]
+            async fn test_client_server_unimplemented() {
+                tokio::task::LocalSet::new()
+                    .run_until(async {
+                        let (client_network, server_network) = setup_mock_networks().await;
+                        let mut system = RpcSystem::new(client_network, None);
+                        let _client = client::Client::new_from_system(&mut system);
+                        let _client_runner = tokio::task::spawn_local(system);
+
+                        #[derive(Clone)]
+                        struct Server {}
+
+                        use crate::capnp::tunnelrpc::interfaces::cloudflared_server::server::Client;
+
+                        #[async_trait]
+                        impl Client for Server {}
+
+                        #[async_trait]
+                        impl session_manager::server::Client for Server {}
+
+                        #[async_trait]
+                        impl configuration_manager::server::Client for Server {}
+
+                        let server_factory = Server {}.build();
+                        let system =
+                            RpcSystem::new(server_network, Some(server_factory.client));
+                        let _server_runner = tokio::task::spawn_local(system);
                     })
                     .await;
             }

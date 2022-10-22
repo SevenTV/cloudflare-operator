@@ -66,15 +66,13 @@ pub(crate) mod tests {
         let (client, server) = tokio::io::duplex(64);
 
         let client_network = {
-            let (recv, send) =
-                tokio_util::compat::TokioAsyncReadCompatExt::compat(client).split();
+            let (recv, send) = tokio_util::compat::TokioAsyncReadCompatExt::compat(client).split();
 
             new_network_client(send, recv)
         };
 
         let server_network = {
-            let (recv, send) =
-                tokio_util::compat::TokioAsyncReadCompatExt::compat(server).split();
+            let (recv, send) = tokio_util::compat::TokioAsyncReadCompatExt::compat(server).split();
 
             new_network_server(send, recv)
         };
