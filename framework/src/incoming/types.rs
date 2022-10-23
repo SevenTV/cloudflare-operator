@@ -1,6 +1,6 @@
 use std::{str::FromStr, sync::Arc, time::Duration};
 
-use anyhow::{anyhow, Result};
+use anyhow::Result;
 use async_trait::async_trait;
 use tokio::io::{AsyncRead, AsyncWrite};
 use utils::context::wait::Context;
@@ -16,6 +16,7 @@ pub enum HttpMethod {
     TRACE,
     CONNECT,
     PATCH,
+    Unknown(String),
 }
 
 impl FromStr for HttpMethod {
@@ -33,7 +34,7 @@ impl FromStr for HttpMethod {
             "TRACE" => Ok(HttpMethod::TRACE),
             "CONNECT" => Ok(HttpMethod::CONNECT),
             "PATCH" => Ok(HttpMethod::PATCH),
-            _ => Err(anyhow!("invalid http method")),
+            s => Ok(HttpMethod::Unknown(s.to_string())),
         }
     }
 }
