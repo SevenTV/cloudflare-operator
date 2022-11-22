@@ -1,0 +1,8 @@
+target/
+*.yaml
+.env
+*_capnp.rs
+*.profraw
+coverage/
+lcov.info
+*.html

@@ -1,0 +1,25 @@
+[package]
+name = "generated"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+build = "build.rs"
+
+[build-dependencies]
+capnpc = "0.14.9"
+anyhow = "1.0.65"
+
+[dependencies]
+procmacros = { path = "../procmacros" }
+utils = { path = "../utils" }
+
+capnp = { version = "0.14.10", features = ["std"] }
+anyhow = "1.0.65"
+capnp-rpc = "0.14.1"
+async-trait = "0.1.58"
+tokio = { version = "1.21.2", features = ["full"] }
+futures = "0.3.25"
+tokio-util = { version = "0.7.4", features = ["full"] }
+uuid = { version = "1.2.1", features = ["v4"] }

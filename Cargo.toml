@@ -1,0 +1,9 @@
+[workspace]
+
+members = [
+    "ingress",
+    "framework",
+    "utils",
+    "procmacros",
+    "generated",
+]
